@@ -1,0 +1,12 @@
+[Unit]
+Description=amyrin bot
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/amyrin/amyrin/bot
+ExecStart=sh start.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

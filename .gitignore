@@ -1,0 +1,7 @@
+config.py
+restart.json
+rtfs_repos/
+.vscode/
+logs/
+*.pyc
+discord.log
