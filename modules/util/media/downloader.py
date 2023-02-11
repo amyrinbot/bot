@@ -17,13 +17,13 @@ from discord.ext import commands
 from core.bot import amyrin
 from core.constants import *
 from modules.util.handlers.nginx import NginxHandler
-from modules.util.imaging.utils import crop_to_center, resize_keep_ratio
+from modules.util.imaging.utils import SequentialImageProcessor
 
 from .base import execute
 from .compressor import CompressionResult, Compressor
 from .exceptions import (AgeLimited, InvalidFormat, LiveStream, MediaException,
-                         MediaServerException, MissingNginxHandler,
-                         NoPartsException, TooLong, ValidityCheckFailed)
+                         MissingNginxHandler,
+                         NoPartsException, TooLong)
 
 
 @dataclass(frozen=True)
@@ -55,7 +55,7 @@ def format_duration(duration_ms):
     else:
         return "{:d}:{:02d}.{:03d}".format(minutes, seconds, milliseconds)
 
-async def parse_subtitles(self, data: dict) -> str:
+async def parse_subtitles(data: dict) -> str:
     lines: List[str] = []
 
     events = data.get("events")
@@ -227,8 +227,10 @@ class Downloader:
                         content_type = resp.headers.get("Content-Type", "image/jpeg")
                         imagedata = await resp.read()
 
-                        resized = await resize_keep_ratio(imagedata, (300, 300))
-                        img = await crop_to_center(resized)
+                        processor = SequentialImageProcessor(imagedata)
+                        await processor.resize_keep_ratio((300, 300))
+                        await processor.crop_to_center()
+                        img = await processor.save()
 
                         imagedata = img.read()
 

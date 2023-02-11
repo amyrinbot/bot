@@ -13,7 +13,7 @@ from PIL import Image, ImageSequence
 from modules.util.executor import run_blocking_func
 from modules.util.imaging.exceptions import (CharacterLimitExceeded,
                                              InvalidTemplate, TooManyFrames)
-from modules.util.imaging.utils import convert_image
+from modules.util.imaging.utils import SequentialImageProcessor
 from modules.util.media.base import execute
 from modules.util.timer import Timer
 
@@ -130,7 +130,10 @@ class Renders:
                     Renders.centered_text, image, img_width=0.85
                 )
             else:
-                image = await convert_image(image, "jpeg")
+                processor = SequentialImageProcessor(image)
+                await processor.change_format("jpeg")
+                await processor.crop_to_center()
+                image = await processor.save()
 
             if hasattr(image, "read"):
                 image = image.read()
@@ -249,7 +252,7 @@ class Renders:
                     buffer,
                     format="gif",
                     save_all=True,
-                    append_images=processed[1:],
+                    append_images=None if len(processed) == 1 else processed[1:],
                     duration=durations,
                     loop=0,
                     disposal=2,
