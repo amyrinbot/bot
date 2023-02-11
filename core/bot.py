@@ -97,8 +97,8 @@ class amyrin(commands.Bot):
             debug = config.DEBUG
 
         async def get_prefix(bot: commands.Bot, message: discord.Message = None) -> str:
-            """if debug:
-                return "amyd"""
+            if debug:
+                return "amyd"
             prefixes = ["amyr"]
             prefixes = list(self.old_prefixes) + prefixes
             return commands.when_mentioned_or(*prefixes)(bot, message)
