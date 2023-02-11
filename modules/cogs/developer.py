@@ -31,7 +31,7 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
     def __init__(self, bot):
         super().__init__()
         self.bot: amyrin = bot
-        self.module_regex = re.compile(r"bot\/(?P<module>modules\/.+)\.py")
+        self.module_regex = re.compile(r"(?P<module>modules\/.+)\.py")
     
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await self.bot.is_owner(ctx.author)
