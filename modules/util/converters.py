@@ -117,7 +117,7 @@ class SpecificUserConverter(commands.Converter):
 
     async def convert(self, ctx: commands.Context, argument: str):
         is_digits = all(char.isdigit() for char in argument)
-        
+
         if is_digits:
             if user := await self._get_user(ctx.bot, int(argument)):
                 return user

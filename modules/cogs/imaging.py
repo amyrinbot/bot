@@ -137,6 +137,7 @@ class Imaging(commands.Cog):
     async def flag(
         self,
         ctx: commands.Context,
+        *,
         argument: str = commands.param(description="Text or image"),
     ):
         new_argument, _ = await ImageConverter().convert(
@@ -157,6 +158,7 @@ class Imaging(commands.Cog):
     async def billboard(
         self,
         ctx: commands.Context,
+        *,
         argument: str = commands.param(description="Text or image"),
     ):
         new_argument, _ = await ImageConverter().convert(

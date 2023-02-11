@@ -22,8 +22,7 @@ from modules.util.imaging.utils import SequentialImageProcessor
 from .base import execute
 from .compressor import CompressionResult, Compressor
 from .exceptions import (AgeLimited, InvalidFormat, LiveStream, MediaException,
-                         MissingNginxHandler,
-                         NoPartsException, TooLong)
+                         MissingNginxHandler, NoPartsException, TooLong)
 
 
 @dataclass(frozen=True)
@@ -55,6 +54,7 @@ def format_duration(duration_ms):
     else:
         return "{:d}:{:02d}.{:03d}".format(minutes, seconds, milliseconds)
 
+
 async def parse_subtitles(data: dict) -> str:
     lines: List[str] = []
 
@@ -72,6 +72,7 @@ async def parse_subtitles(data: dict) -> str:
                     lines.append(f"[{start}-{end}]{line}")
 
     return lines
+
 
 class Downloader:
     def __init__(

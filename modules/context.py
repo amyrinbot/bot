@@ -39,11 +39,11 @@ class Context(commands.Context):
         if self.interaction is None:
             return EditTyping(self)
         return DeferTyping(self, ephemeral=ephemeral)
-    
+
     async def invoke(self, command: commands.Command | str, *args, **kwargs):
         if isinstance(command, str):
             command = self.bot.get_command(command)
-            
+
         self.command = command
         return await command(*args, **kwargs)
 
@@ -82,7 +82,7 @@ class Context(commands.Context):
                     kwargs["attachments"] = [file]
                 else:
                     kwargs["file"] = file
-                    
+
                 return await func(
                     content="Message was over 2000 characters, so it has been turned into a text file",
                     *args,
