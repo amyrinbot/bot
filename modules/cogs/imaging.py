@@ -167,7 +167,7 @@ class Imaging(commands.Cog):
 
         new_argument = new_argument or argument
 
-        await self._handle_makesweet(ctx, "billboard-cityscape", (950, 512), new_argument)
+        await self._handle_makesweet(ctx, "billboard-cityscape", (1000, 600), new_argument)
 
 
 async def setup(

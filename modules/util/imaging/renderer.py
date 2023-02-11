@@ -96,6 +96,7 @@ class Renders:
                     draw_emojis=True,
                 )
 
+            img.save("img.png", "Png")
             img.save(buf, "png")
 
         buf.seek(0)
