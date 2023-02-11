@@ -68,8 +68,6 @@ class amyrin(commands.Bot):
         self.command_tasks: Dict[str, dict] = {}
         self.command_cache: Dict[int, List[discord.Message]] = ExpiringDict(max_len=1000, max_age_seconds=60)
         
-        self.old_prefixes = ("amy",)
-        
         self.context = Context
         
         self.module_relatives: Dict[str, List[str]] = {}
@@ -100,7 +98,6 @@ class amyrin(commands.Bot):
             if debug:
                 return "amyd"
             prefixes = ["amyr"]
-            prefixes = list(self.old_prefixes) + prefixes
             return commands.when_mentioned_or(*prefixes)(bot, message)
 
         return get_prefix

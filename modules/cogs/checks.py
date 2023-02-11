@@ -15,12 +15,6 @@ class Checks(commands.Cog):
         
         if self.bot.debug and ctx.interaction:
             return False
-        
-        if ctx.prefix in self.bot.old_prefixes:
-            prefix = await self.bot.get_formatted_prefix(False)
-
-            await ctx.reply(f"You are trying to an old prefix, my new prefix is `{prefix}`.")
-            return False
 
         if not await self.bot.is_owner(ctx.author) and ctx.author.id not in config.ALLOWED_ON_DEBUG:
             prefix = await self.bot.get_formatted_prefix(False)
