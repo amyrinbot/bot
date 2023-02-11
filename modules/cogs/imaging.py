@@ -21,11 +21,11 @@ class Imaging(commands.Cog):
         self.bot: amyrin = bot
 
     async def _handle_makesweet(
-        self, ctx: commands.Context, template: str, *images
+        self, ctx: commands.Context, template: str, size: tuple[int, int], *images
     ) -> None:
         try:
             async with ctx.typing():
-                result = await render(Renders.makesweet, template, *images)
+                result = await render(Renders.makesweet, template, size, *images)
         except CharacterLimitExceeded as exc:
             return await ctx.send(
                 f"One of the given texts ({exc.length}) exceeds the maximum character limit of {exc.limit} characters"
@@ -126,7 +126,7 @@ class Imaging(commands.Cog):
         new_argument1 = new_argument1 or argument1
         new_argument2 = new_argument2 or argument2
 
-        await self._handle_makesweet(ctx, "heart-locket", new_argument1, new_argument2)
+        await self._handle_makesweet(ctx, "heart-locket", (512, 512), new_argument1, new_argument2)
 
     @command(
         description="Render a waving flag with an image or text.",
@@ -146,7 +146,7 @@ class Imaging(commands.Cog):
 
         new_argument = new_argument or argument
 
-        await self._handle_makesweet(ctx, "flag", new_argument)
+        await self._handle_makesweet(ctx, "flag", (512, 512), new_argument)
 
     @command(
         description="Render a waving flag with an image or text.",
@@ -167,7 +167,7 @@ class Imaging(commands.Cog):
 
         new_argument = new_argument or argument
 
-        await self._handle_makesweet(ctx, "billboard-cityscape", new_argument)
+        await self._handle_makesweet(ctx, "billboard-cityscape", (950, 512), new_argument)
 
 
 async def setup(

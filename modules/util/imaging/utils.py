@@ -9,7 +9,7 @@ from modules.util.executor import executor
 
 
 class SequentialImageProcessor:
-    def __init__(self, image: bytes | BytesIO, animated: bool = False) -> None:
+    def __init__(self, image: bytes | BytesIO | Image.Image, animated: bool = False) -> None:
         if not isinstance(image, Image.Image):
             if isinstance(image, bytes):
                 image = BytesIO(image)

@@ -31,7 +31,7 @@ class RenderResult:
 
 class Renders:
     def centered_text(
-        text: str, t_size_min=5, t_size_max=75, img_width=0.95
+        text: str, size: tuple[int, int] = (512, 512), t_size_min=5, t_size_max=75, img_width=0.95
     ) -> BytesIO:
         text_limit = 1000
         text_length = len(text)
@@ -41,7 +41,6 @@ class Renders:
 
         font = FontDB.Query("arial-unicode-ms arabic")
 
-        size = (512, 512)
         width, height = size
         img_width = width * img_width
 
@@ -104,7 +103,7 @@ class Renders:
 
     async def makesweet(
         template: Literal["billboard-cityscape", "flag", "heart-locket"],
-        *images: List[Union[bytes, BytesIO, str]],
+        size: tuple[int, int] = (512, 512), *images: List[Union[bytes, BytesIO, str]],
     ) -> BytesIO:
         command = ["docker", "run"]
 
@@ -127,7 +126,7 @@ class Renders:
         for index, image in enumerate(images):
             if isinstance(image, str):
                 image, _ = await run_blocking_func(
-                    Renders.centered_text, image, img_width=0.85
+                    Renders.centered_text, image, size=size, img_width=0.85
                 )
             else:
                 processor = SequentialImageProcessor(image)
