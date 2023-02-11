@@ -55,6 +55,23 @@ def format_duration(duration_ms):
     else:
         return "{:d}:{:02d}.{:03d}".format(minutes, seconds, milliseconds)
 
+async def parse_subtitles(self, data: dict) -> str:
+    lines: List[str] = []
+
+    events = data.get("events")
+    for event in events:
+        start_ms = event.get("tStartMs")
+        end_ms = start_ms + event.get("dDurationMs")
+
+        start = format_duration(start_ms)
+        end = format_duration(end_ms)
+
+        for seg in event.get("segs"):
+            for value in seg.values():
+                for line in value.splitlines():
+                    lines.append(f"[{start}-{end}]{line}")
+
+    return lines
 
 class Downloader:
     def __init__(
@@ -173,24 +190,6 @@ class Downloader:
 
         return conversion_map.get(key)
 
-    async def _parse_subtitles(self, data: dict) -> str:
-        lines: List[str] = []
-
-        events = data.get("events")
-        for event in events:
-            start_ms = event.get("tStartMs")
-            end_ms = start_ms + event.get("dDurationMs")
-
-            start = format_duration(start_ms)
-            end = format_duration(end_ms)
-
-            for seg in event.get("segs"):
-                for value in seg.values():
-                    for line in value.splitlines():
-                        lines.append(f"[{start}-{end}]{line}")
-
-        return lines
-
     async def _tag_audio_file(self, data: dict, path: os.PathLike) -> None:
         audio = eyed3.load(path)
         title = data.get("fulltitle", data.get("title", "N/A"))
@@ -215,7 +214,7 @@ class Downloader:
                         continue
 
                     subtitles = await resp.json()
-                    parsed_subtitles = await self._parse_subtitles(subtitles)
+                    parsed_subtitles = await parse_subtitles(subtitles)
                     audio.tag.lyrics.set(
                         "\n".join(parsed_subtitles), "Synchronized lyrics", b"eng"
                     )

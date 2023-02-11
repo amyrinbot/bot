@@ -100,7 +100,7 @@ class Imaging(commands.Cog):
 
     @command(
         description="Render the dead heartlocket meme.",
-        examples=["{prefix}heartlocket @amyrin#9016 amyrin my beloved"],
+        examples=["{prefix}heartlocket 799231501970833410 amyrin my beloved"],
         aliases=[
             "heartpendant",
             "hl",
