@@ -27,6 +27,14 @@ class RenderResult:
     is_animated: bool
 
 class Renders:
+    async def centered_text(text: str) -> BytesIO:
+        ...
+    
+    def heartlocker(
+        image1: bytes | BytesIO | str, image2: bytes | BytesIO | str
+    ) -> BytesIO:
+        ...
+    
     def caption(
         image: bytes | BytesIO, text: str, bypass_charlimit: bool = False
     ) -> BytesIO:
@@ -56,7 +64,7 @@ class Renders:
             
             width, height = size
             c_width = width * 0.95 # subjective design choice for borders
-            t_size = 75
+            t_size = 150
             
             wrapped_text = text_wrap(
                 text,

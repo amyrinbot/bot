@@ -68,6 +68,8 @@ class amyrin(commands.Bot):
         self.command_tasks: Dict[str, dict] = {}
         self.command_cache: Dict[int, List[discord.Message]] = ExpiringDict(max_len=1000, max_age_seconds=60)
         
+        self.old_prefixes = ("amy")
+        
         self.context = Context
         
         self.module_relatives: Dict[str, List[str]] = {}
@@ -97,7 +99,9 @@ class amyrin(commands.Bot):
         async def get_prefix(bot: commands.Bot, message: discord.Message = None) -> str:
             if debug:
                 return "amyd"
-            return commands.when_mentioned_or(*["amy"])(bot, message)
+            prefixes = ["amyr"]
+            prefixes = list(self.old_prefixes) + prefixes
+            return commands.when_mentioned_or(*prefixes)(bot, message)
 
         return get_prefix
 
@@ -136,6 +140,9 @@ class amyrin(commands.Bot):
                 continue
 
             for file in files:  # iterate through all files in a subdirectory
+                if not file.endswith(".py"):
+                    continue
+                
                 fn = file[:-3]
 
                 if os.path.isdir(os.path.join(prefix, fn)):
@@ -151,38 +158,42 @@ class amyrin(commands.Bot):
 
                     self.logger.error(f"Error occured loading module {name}:\n{exc}")
                 else:
-                    source = inspect.getsource(imp)
-                    ast_tree = ast.parse(source)
-                    imports = [
-                        x.module if isinstance(x, ast.ImportFrom) else x.names[0].name
-                        for x in ast_tree.body if any(
-                            isinstance(x, i) for i in [ast.Import, ast.ImportFrom]
-                        )
-                    ]
-                    clean_imports = [
-                        x if not isinstance(x, ModuleType) else x.__name__
-                        for x in filter(
-                            lambda x: x is not None, imports
-                        ) if x.startswith("modules")
-                    ]
-                    
-                    self.module_relatives[name] = clean_imports
-                    
-                    if hasattr(imp, "setup"):
-                        try:
-                            await self.load_extension(name)
-                        except Exception as exc:
-                            exc = "".join(
-                                traceback.format_exception(
-                                    type(exc), exc, exc.__traceback__
+                    try:
+                        source = inspect.getsource(imp)
+                    except Exception:
+                        pass
+                    else:
+                        ast_tree = ast.parse(source)
+                        imports = [
+                            x.module if isinstance(x, ast.ImportFrom) else x.names[0].name
+                            for x in ast_tree.body if any(
+                                isinstance(x, i) for i in [ast.Import, ast.ImportFrom]
+                            )
+                        ]
+                        clean_imports = [
+                            x if not isinstance(x, ModuleType) else x.__name__
+                            for x in filter(
+                                lambda x: x is not None, imports
+                            ) if x.startswith("modules")
+                        ]
+                        
+                        self.module_relatives[name] = clean_imports
+                        
+                        if hasattr(imp, "setup"):
+                            try:
+                                await self.load_extension(name)
+                            except Exception as exc:
+                                exc = "".join(
+                                    traceback.format_exception(
+                                        type(exc), exc, exc.__traceback__
+                                    )
                                 )
-                            )
 
-                            self.logger.error(
-                                f"Error occured loading module {name}:\n{exc}"
-                            )
-                        else:
-                            self.logger.info(f"Succesfully loaded module {name}")
+                                self.logger.error(
+                                    f"Error occured loading module {name}:\n{exc}"
+                                )
+                            else:
+                                self.logger.info(f"Succesfully loaded module {name}")
 
     async def setup_hook(self) -> None:
         discord.utils.setup_logging()

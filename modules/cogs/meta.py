@@ -25,7 +25,7 @@ class Meta(commands.Cog):
     
     @command(description="Get my full source code or the source code of a specific command", aliases=["src"], examples=["{prefix}source calculator"])
     async def source(self, ctx: commands.Context | discord.Interaction, *, command: str = None):
-        URL = "https://github.com/syricium/amyrin"
+        URL = "https://github.com/amyrinbot/bot"
         BRANCH = "main"
         
         if command is None:
@@ -102,19 +102,15 @@ class Meta(commands.Cog):
                         lines += 1
             return files, classes, funcs, comments, lines, characters
 
-        if ctx.interaction:
-            await ctx.interaction.response.defer()
-        else:
-            await ctx.typing()
-
-        (
-            files,
-            classes,
-            funcs,
-            comments,
-            lines,
-            characters,
-        ) = await self.bot.loop.run_in_executor(None, line_count)
+        async with ctx.typing():
+            (
+                files,
+                classes,
+                funcs,
+                comments,
+                lines,
+                characters,
+            ) = await self.bot.loop.run_in_executor(None, line_count)
 
         pid = os.getpid()
         process = psutil.Process(pid)
@@ -136,18 +132,7 @@ class Meta(commands.Cog):
             "Lines": lines,
         }
 
-        sorted_names = sorted(f_stats.keys())
-        sorted_stats = {
-            k: v
-            for k, v in sorted(f_stats.items(), key=lambda item: item[1], reverse=True)
-        }
-        largest = sorted_names[-1]
-        f_stats_fmt = {}
-        for name, stat in sorted_stats.items():
-            new_name = name + " ".join(range(len(largest) - len(name)))
-            f_stats_fmt[new_name] = stat
-
-        f_stats_str = "\n".join(f"{k}: {v}" for k, v in f_stats_fmt.items())
+        f_stats_str = "\n".join(f"{k}: {v}" for k, v in f_stats.items())
 
         em.add_field(
             name="File Statistics",

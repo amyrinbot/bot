@@ -25,3 +25,12 @@ class ValidityCheckFailed(Exception):
 
 class AgeLimited(Exception):
     pass
+
+class LiveStream(Exception):
+    pass
+
+class TooLong(Exception):
+    def __init__(self, duration: int, limit: int, *args: object) -> None:
+        self.duration = duration
+        self.limit = limit
+        super().__init__(*args)

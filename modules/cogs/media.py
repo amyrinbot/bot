@@ -11,7 +11,7 @@ from discord.ext import commands
 
 from core.bot import amyrin
 from modules.util.converters import FileConverter, URLObject, format_list, URLConverter
-from modules.util.media.exceptions import AgeLimited, FailedCompressionException, InvalidFormat, MediaException, MissingNginxHandler, ValidityCheckFailed
+from modules.util.media.exceptions import AgeLimited, FailedCompressionException, InvalidFormat, LiveStream, MediaException, MissingNginxHandler, TooLong, ValidityCheckFailed
 from modules.util.handlers.nginx import NginxHandlerExceededSizeLimit
 from modules.util.media.downloader import Downloader, FileDownload, URLDownload
 
@@ -23,7 +23,7 @@ class Media(commands.Cog):
         super().__init__()
         self.bot: amyrin = bot
         
-    async def _process_download(self, ctx, url: str, format: str, compress: bool):
+    async def _process_download(self, ctx, url: str, format: str, compress: bool, include_tags: bool):
         if isinstance(ctx, discord.Interaction):
             ctx = await self.bot.get_context(ctx.message)
 
@@ -53,6 +53,7 @@ class Media(commands.Cog):
                     output=tmp_dir,
                     nginx=nginx,
                     format=format,
+                    include_tags=include_tags,
                     updater=update,
                     compress=compress
                 )
@@ -89,6 +90,14 @@ class Media(commands.Cog):
                 return await update(str(exc))
             except AgeLimited:
                 return await update("This video is not able to be downloaded, as it exceeds the maximum age limit.")
+            except LiveStream:
+                return await update("I cannot download live streams.")
+            except TooLong as exc:
+                if exc.duration:
+                    duration = humanfriendly.format_timespan(int(exc.duration))
+                    limit = humanfriendly.format_timespan(int(exc.limit))
+                    return await ctx.send(f"Video with duration {duration} exceeds the maximum limit of {limit}.")
+                return await ctx.send("Unable to get duration of video, panicking.")
             except json.JSONDecodeError as exc:
                 if random.randint(1,1000) == 591:
                     reason = "of gas leak!?!??!?"
@@ -158,12 +167,18 @@ class Media(commands.Cog):
             description="The URL for the video or audio you want to download",
             converter=URLConverter
         ),
-        flags: DownloadFlags = None
+        *, flags: DownloadFlags = None
     ):
-        format = "mp4" if not flags else flags.format
-        compress = False if not flags else flags.compress
+        if flags:
+            format = flags.get("format", "mp4")
+            compress = flags.get("compress", False)
+            include_tags = flags.get("include-tags", False)
+        else:
+            format = "mp4"
+            compress = False
+            include_tags = False
         
-        await self._process_download(ctx, url, format, compress)
+        await self._process_download(ctx, url, format, compress, include_tags)
         
     @commands.hybrid_command(
         name="detect",

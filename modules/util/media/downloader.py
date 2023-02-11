@@ -1,3 +1,5 @@
+from datetime import datetime
+import inspect
 from io import BytesIO
 import json
 import os
@@ -7,16 +9,19 @@ import string
 from typing import Any, Callable, List, Optional, TypedDict
 
 import discord
+import eyed3
 import magic
 from discord.ext import commands
 
+from modules.util.imaging.utils import crop_to_center, resize_keep_ratio
+
 from .base import execute
-from .exceptions import AgeLimited, MediaException, MediaServerException, MissingNginxHandler, NoPartsException, InvalidFormat, ValidityCheckFailed
+from .exceptions import AgeLimited, LiveStream, MediaException, MediaServerException, MissingNginxHandler, NoPartsException, InvalidFormat, TooLong, ValidityCheckFailed
 from .compressor import Compressor, CompressionResult
 from dataclasses import dataclass
-import config
 from modules.util.handlers.nginx import NginxHandler
 from core.constants import *
+from core.bot import amyrin
 
 @dataclass(frozen=True)
 class FileDownload:
@@ -33,6 +38,17 @@ class URLDownload:
     compression_time: Optional[int]
     content_type_converted: bool
     sizes: TypedDict("sizes", {"old": int, "new": int})
+    
+# thanks chatgpt
+def format_duration(duration_ms):
+    total_seconds = duration_ms // 1000
+    minutes, seconds = divmod(total_seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    milliseconds = duration_ms % 1000
+    if hours > 0:
+        return "{:d}:{:02d}:{:02d}.{:03d}".format(hours, minutes, seconds, milliseconds)
+    else:
+        return "{:d}:{:02d}.{:03d}".format(minutes, seconds, milliseconds)
 
 class Downloader:
     def __init__(
@@ -42,6 +58,7 @@ class Downloader:
         output: os.PathLike,
         nginx: NginxHandler = None,
         format: str = "mp4",
+        include_tags: bool = False,
         compress: bool = False,
         close_after: bool = False,
         verbose: bool = False,
@@ -65,6 +82,9 @@ class Downloader:
         self._verbose = verbose
         self._updater = updater
         self._nginx = nginx
+        self._include_tags = include_tags
+
+        self._client: amyrin = getattr(self._interaction, "client", getattr(self._interaction, "bot"))
 
         aliases = {}
 
@@ -111,12 +131,23 @@ class Downloader:
 
     async def _check_validity(self, age_limit: int = 18) -> bool:
         data = await self._extract_info()
+        
+        with open("data.json", "w") as f:
+            f.write(json.dumps(data, indent=4))
+        
+        if data.get("is_live") is True:
+            raise LiveStream
+        
+        duration_limit = 3600
+        duration = data.get("duration")
+        if (duration or duration_limit+1) > duration_limit: # error if the key doesnt exist lmao
+            raise TooLong(duration, duration_limit)
 
         if age_limit:
             if data.get("age_limit", 0) >= age_limit:
                 raise AgeLimited
         
-        return True
+        return data
     
     async def _update(self, message: str):
         if self._updater:
@@ -137,8 +168,73 @@ class Downloader:
         }
         
         return conversion_map.get(key)
+    
+    async def _parse_subtitles(self, data: dict) -> str:
+        lines: List[str] = []
+        
+        events = data.get("events")
+        for event in events:
+            start_ms = event.get("tStartMs")
+            end_ms = start_ms + event.get("dDurationMs")
+            
+            start = format_duration(start_ms)
+            end = format_duration(end_ms)
+            
+            for seg in event.get("segs"):
+                for value in seg.values():
+                    for line in value.splitlines():
+                        lines.append(f"[{start}-{end}]{line}")
+                    
+        return lines
+    
+    async def _tag_audio_file(self, data: dict, path: os.PathLike) -> None:
+        audio = eyed3.load(path)
+        title = data.get("fulltitle", data.get("title", "N/A"))
+        channel = data.get("channel", "N/A")
+        audio.tag.title = title
+        audio.tag.artist = channel
+            
+        if upload_date := data.get("upload_date"):
+            date_format = "%Y%m%d"
+            date = datetime.strptime(upload_date, date_format)
+            audio.tag.recording_date = date.year
+                
+        if subtitles := data.get("subtitles"):
+            for name, subtitles in subtitles.items():
+                if not name.startswith("en") or not subtitles:
+                    continue
+                
+                subtitle = subtitles[0]
+                url = subtitle.get("url")
+                async with self._client.session.get(url) as resp:
+                    if resp.status != 200:
+                        continue
+                    
+                    subtitles = await resp.json()
+                    parsed_subtitles = await self._parse_subtitles(subtitles)
+                    audio.tag.lyrics.set("\n".join(parsed_subtitles), u"Synchronized lyrics", b"eng")
+                    
+            
+        if thumbnails := data.get("thumbnails"):
+            thumbnail = thumbnails[-1].get("url")
+            if thumbnail:
+                async with self._client.session.get(thumbnail) as resp:
+                    if resp.status == 200:
+                        content_type = resp.headers.get("Content-Type", "image/jpeg")
+                        imagedata = await resp.read()
+                        
+                        resized = await resize_keep_ratio(imagedata, (300, 300))
+                        img = await crop_to_center(resized)
+                        
+                        imagedata = img.read()
+                        
+                        audio.tag.images.set(
+                            3, imagedata, content_type, u"YouTube Thumbnail",
+                        )
+            
+        audio.tag.save()
 
-    async def _download(self):
+    async def _download(self, data: dict):
         cmd = ["yt-dlp"]
 
         def add_args(args: List[str]):
@@ -151,7 +247,7 @@ class Downloader:
         if hasattr(self._output, "name") and getattr(self._output, "name") is not None:
             output = self._output.name
 
-        name = self._generate_name()
+        name = data.get("title")
         filename = name + "." + self._format
         path = os.path.join(output, filename)
         add_args(["--output", f'"{path}"'])
@@ -186,6 +282,9 @@ class Downloader:
                 new_path = path.replace("." + last_part, "." + conversion)
                 os.rename(path, new_path)
 
+        if self._format == "mp3" and self._include_tags:
+            await self._tag_audio_file(data, new_path)
+ 
         return new_path, content_type_converted
     
     async def _upload(self, path: os.PathLike) -> str:
@@ -200,8 +299,7 @@ class Downloader:
         
         await self._update(f"{LOADING} Checking validity")
 
-        if (out := await self._check_validity(age_limit=age_limit)) is not True:
-            raise ValidityCheckFailed(out)
+        data = await self._check_validity(age_limit=age_limit)
 
         typename = (
             "video"
@@ -211,9 +309,10 @@ class Downloader:
             else "(unknown typename)"
         )
 
-        await self._update(f"📥 Now downloading {typename}")
+        name = data.get("title")
+        await self._update(f"📥 Now downloading `{name}` as `{typename}`.")
 
-        path, content_type_converted = await self._download()
+        path, content_type_converted = await self._download(data)
 
         stats = os.stat(path)
         fs_limit = 8388608 if not self._interaction.guild \

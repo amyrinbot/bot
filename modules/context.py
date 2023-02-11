@@ -1,4 +1,3 @@
-import asyncio
 from typing import Union
 import random
 import string
@@ -13,22 +12,17 @@ from discord.ext.commands.context import DeferTyping
 class EditTyping(Typing):
     """Custom Typing subclass to support cancelling typing when the message content changed"""
     
-    def __init__(self, message: discord.Message, messageable: discord.abc.Messageable) -> None:
-        self.message = message
+    def __init__(self, context: commands.Context) -> None:
+        self.context = context
+        super().__init__(context)
         
-        super().__init__(messageable)
+    async def __aenter__(self) -> None:
+        if self.context.message.id not in self.context.bot.command_cache.keys():
+            return await super().__aenter__()
         
-    async def do_typing(self) -> None:
-        channel = await self._get_channel()
-        typing = channel._state.http.send_typing
-        old_message_content = self.message.content
-        
-        while True:
-            if old_message_content != self.message.content:
-                return self.task.cancel()
-            
-            await asyncio.sleep(5)
-            await typing(channel.id)
+    async def __aexit__(self, exc_type, exc, traceback) -> None:
+        if self.context.message.id not in self.context.bot.command_cache.keys():
+            return await super().__aexit__(exc_type, exc, traceback)
         
     
 
@@ -41,7 +35,7 @@ class Context(commands.Context):
     
     def typing(self, *, ephemeral: bool = False) -> Union[Typing, DeferTyping]:
         if self.interaction is None:
-            return EditTyping(self.message, self)
+            return EditTyping(self)
         return DeferTyping(self, ephemeral=ephemeral)
 
     async def send(self, content: str = None, *args, **kwargs):
@@ -55,6 +49,7 @@ class Context(commands.Context):
                         await message.delete()
                     except discord.HTTPException:
                         pass
+            kwargs.pop("reference", None)
             func = entries[-1].edit
         else:
             func = super().send
