@@ -54,7 +54,11 @@ class URLObject:
                 await _session.close()
 
     async def save(
-        self, fp: BufferedIOBase | os.PathLike[Any], *, data: bytes = None, seek_begin: bool = True
+        self,
+        fp: BufferedIOBase | os.PathLike[Any],
+        *,
+        data: bytes = None,
+        seek_begin: bool = True,
     ) -> int:
         """Saves to an object or buffer."""
         data = data or await self.read()
@@ -63,7 +67,7 @@ class URLObject:
             if seek_begin:
                 fp.seek(0)
             return written
-        
+
         with open(fp, "wb") as f:
             return f.write(data)
 
@@ -85,30 +89,38 @@ class URLObject:
             BytesIO(await self.read(session=session)), self.name, spoiler=False
         )
 
+
 class URLConverter(commands.Converter):
     async def convert(
         self, ctx: commands.Context | discord.Interaction, argument: str
     ) -> str:
         parsed_url = urlparse(argument)
-        
-        if parsed_url.netloc in ("127.0.0.1", "localhost", "0.0.0.0") \
-            and not await ctx.bot.is_owner(ctx.author):
+
+        if parsed_url.netloc in (
+            "127.0.0.1",
+            "localhost",
+            "0.0.0.0",
+        ) and not await ctx.bot.is_owner(ctx.author):
             raise commands.BadArgument("Invalid URL")
-        
+
         return argument
+
+
 class SpecificUserConverter(commands.Converter):
     """User Converter class that only supports IDs and mentions"""
-    
+
     async def convert(self, ctx: commands.Context, argument: str):
-        if all(char.isdigit() for char in argument) and (user := ctx.bot.get_user(argument)):
-            return user
-        
+        if all(char.isdigit() for char in argument):
+            if user := ctx.bot.get_user(int(argument)):
+                return user
+
         if match := re.match(r"<@!?([0-9]+)>", argument):
             if user := ctx.bot.get_user(int(match.group(1))):
                 return user
-            
+
         raise commands.BadArgument("Failed to convert argument to user")
-    
+
+
 class FileConverter(commands.Converter):
     async def convert(
         self, ctx: commands.Context | discord.Interaction, file: str = None

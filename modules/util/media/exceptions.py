@@ -13,21 +13,27 @@ class NoPartsException(Exception):
 
 class FailedCompressionException(Exception):
     pass
-    
+
+
 class MissingNginxHandler(Exception):
     pass
-    
+
+
 class MediaServerException(Exception):
     pass
+
 
 class ValidityCheckFailed(Exception):
     pass
 
+
 class AgeLimited(Exception):
     pass
 
+
 class LiveStream(Exception):
     pass
+
 
 class TooLong(Exception):
     def __init__(self, duration: int, limit: int, *args: object) -> None:

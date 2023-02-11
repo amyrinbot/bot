@@ -6,6 +6,7 @@ import traceback
 
 import discord
 from discord.ext import commands
+
 from core.bot import amyrin
 
 
@@ -14,28 +15,28 @@ class MessageEditHandler(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener("on_message_edit")
-    async def reprocess_on_edit(self, before: discord.Message, after: discord.Message) -> None:
+    async def reprocess_on_edit(
+        self, before: discord.Message, after: discord.Message
+    ) -> None:
         if (
-            before.content == after.content or
-            after.id not in self.bot.command_cache.keys()
+            before.content == after.content
+            or after.id not in self.bot.command_cache.keys()
         ):
             return
-            
+
         await self.bot.process_commands(after)
-        
+
     @commands.Cog.listener("on_message_delete")
     async def purge_on_delete(self, message: discord.Message) -> None:
         if message.id not in self.bot.command_cache.keys():
             return
-        
+
         entries = self.bot.command_cache[message.id]
         for message in entries:
             try:
                 await message.delete()
             except discord.HTTPException:
                 pass
-            
-        
 
 
 async def setup(bot):

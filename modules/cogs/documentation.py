@@ -90,11 +90,11 @@ class Documentation(commands.Cog):
                     await msg.delete()
                 except Exception:
                     pass
-                
+
                 if out is False:
                     return False
-                
-                if out is True: 
+
+                if out is True:
                     results: Dict[str, Optional[Exception]] = {}
 
                     for name, (func, task) in cache_map.items():
@@ -122,7 +122,6 @@ class Documentation(commands.Cog):
                     await ctx.send(embed=embed)
                     return True
 
-        
             func, task = cache_map[command]
             task: asyncio.Task
 
@@ -137,14 +136,12 @@ class Documentation(commands.Cog):
                         pass
                     finally:
                         return False
-                    
+
                 try:
                     task.cancel()
                 except Exception as exc:
                     error = "".join(
-                        traceback.format_exception(
-                            type(exc), exc, exc.__traceback__
-                        )
+                        traceback.format_exception(type(exc), exc, exc.__traceback__)
                     )
                     await ctx.send(f"Failed to cancel task:\n```py\n{error}\n```")
                     return False
@@ -294,7 +291,8 @@ class Documentation(commands.Cog):
     async def rtfm(
         self,
         ctx: commands.Context,
-        *, query: str = commands.param(
+        *,
+        query: str = commands.param(
             description="The query you want to search for in the default (discord.py) documentation"
         ),
     ):
@@ -310,7 +308,8 @@ class Documentation(commands.Cog):
     async def rtfm_discord_py(
         self,
         ctx: commands.Context,
-        *, query: str = commands.param(
+        *,
+        query: str = commands.param(
             description="The query you want to search for in the discord.py documentation"
         ),
     ):
@@ -330,7 +329,8 @@ class Documentation(commands.Cog):
     async def rtfs(
         self,
         ctx: commands.Context,
-        *, query: str = commands.param(
+        *,
+        query: str = commands.param(
             description="The query you want to search for in the default (discord.py) source code"
         ),
     ):
@@ -346,7 +346,8 @@ class Documentation(commands.Cog):
     async def rtfs_discord_py(
         self,
         ctx: commands.Context,
-        *, query: str = commands.param(
+        *,
+        query: str = commands.param(
             description="The function or class you want to search for in the discord.py source code"
         ),
     ):
@@ -381,7 +382,8 @@ class Documentation(commands.Cog):
     async def documentation(
         self,
         ctx: commands.Context,
-        *, query: str = commands.param(
+        *,
+        query: str = commands.param(
             description="The query you want to search for in the default (discord.py) documentation"
         ),
     ):
@@ -397,7 +399,8 @@ class Documentation(commands.Cog):
     async def docs_discord_py(
         self,
         ctx: commands.Context,
-        *, query: str = commands.param(
+        *,
+        query: str = commands.param(
             description="The query you want to search for in the discord.py documentation"
         ),
     ):

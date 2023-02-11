@@ -9,7 +9,6 @@ import os
 import random
 import string
 import traceback
-import inspect
 from datetime import datetime
 from textwrap import indent
 from types import ModuleType
@@ -21,6 +20,7 @@ import humanfriendly
 import mystbin
 from discord.ext import commands, ipc, tasks
 from discord.ext.commands import Greedy
+from expiringdict import ExpiringDict
 from playwright.async_api import async_playwright
 from playwright.async_api._generated import Browser
 
@@ -28,7 +28,7 @@ import config
 from modules.context import Context
 from modules.util.documentation.parser import DocParser
 from modules.util.handlers.nginx import NginxHandler
-from expiringdict import ExpiringDict
+
 
 class amyrin(commands.Bot):
     def __init__(self, *args, **kwargs) -> commands.Bot:
@@ -52,24 +52,21 @@ class amyrin(commands.Bot):
         )
         self.docparser: DocParser = None  # DocParser instance, later defined in modules.util.documentation.parser
 
-        self.ipc = ipc.Server(
-            self, host="0.0.0.0", secret_key=config.IPC_SECRET_KEY
-        )
+        self.ipc = ipc.Server(self, host="0.0.0.0", secret_key=config.IPC_SECRET_KEY)
 
         self.color = (
             0x2F3136  # color used for embeds and whereever else it would be appropiate
         )
-        
-        self.nginx = NginxHandler(
-            url=config.Nginx.url,
-            path=config.Nginx.path
-        )
-        
+
+        self.nginx = NginxHandler(url=config.Nginx.url, path=config.Nginx.path)
+
         self.command_tasks: Dict[str, dict] = {}
-        self.command_cache: Dict[int, List[discord.Message]] = ExpiringDict(max_len=1000, max_age_seconds=60)
-        
+        self.command_cache: Dict[int, List[discord.Message]] = ExpiringDict(
+            max_len=1000, max_age_seconds=60
+        )
+
         self.context = Context
-        
+
         self.module_relatives: Dict[str, List[str]] = {}
 
     @tasks.loop(hours=3)
@@ -125,7 +122,7 @@ class amyrin(commands.Bot):
 
     async def on_connect(self) -> None:
         self.logger.info("Connected to discord gateway")
-        
+
     async def load_extensions(self) -> None:
         rootdir = os.getcwd()
         direc = os.path.join(rootdir, "modules")
@@ -139,7 +136,7 @@ class amyrin(commands.Bot):
             for file in files:  # iterate through all files in a subdirectory
                 if not file.endswith(".py"):
                     continue
-                
+
                 fn = file[:-3]
 
                 if os.path.isdir(os.path.join(prefix, fn)):
@@ -162,20 +159,22 @@ class amyrin(commands.Bot):
                     else:
                         ast_tree = ast.parse(source)
                         imports = [
-                            x.module if isinstance(x, ast.ImportFrom) else x.names[0].name
-                            for x in ast_tree.body if any(
+                            x.module
+                            if isinstance(x, ast.ImportFrom)
+                            else x.names[0].name
+                            for x in ast_tree.body
+                            if any(
                                 isinstance(x, i) for i in [ast.Import, ast.ImportFrom]
                             )
                         ]
                         clean_imports = [
                             x if not isinstance(x, ModuleType) else x.__name__
-                            for x in filter(
-                                lambda x: x is not None, imports
-                            ) if x.startswith("modules")
+                            for x in filter(lambda x: x is not None, imports)
+                            if x.startswith("modules")
                         ]
-                        
+
                         self.module_relatives[name] = clean_imports
-                        
+
                         if hasattr(imp, "setup"):
                             try:
                                 await self.load_extension(name)
@@ -200,7 +199,7 @@ class amyrin(commands.Bot):
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch()
         self.bcontext = await self.browser.new_context()
-                            
+
         await self.load_extensions()
         await self.update_command_callbacks()
 
@@ -209,51 +208,46 @@ class amyrin(commands.Bot):
             return
 
         await self.process_commands(message)
-        
+
     def _generate_ct_name(self, command_name: str):
         for _ in range(100):
-            id_part = "".join(random.choices(
-                string.digits, k=5
-            ))
+            id_part = "".join(random.choices(string.digits, k=5))
             name = command_name.replace(" ", "-") + "-" + id_part
-            
+
             if name not in self.command_tasks.keys():
                 return name
-            
-        raise RecursionError("maximum command task name generation error recursion limit reached") 
-        
+
+        raise RecursionError(
+            "maximum command task name generation error recursion limit reached"
+        )
+
     def _create_callback(self, command: commands.Command):
         command._original_callback = command.callback
-        
+
         async def callback(cog, *args, **kwargs):
             ctx = args[0]
             command: commands.Command = ctx.command
             cb = command._original_callback
-            
+
             task = asyncio.create_task(cb(cog, *args, **kwargs))
             name = self._generate_ct_name(command.qualified_name)
-            obj = {
-                "user": ctx.author.id,
-                "task": task,
-                "created": datetime.utcnow()
-            }
+            obj = {"user": ctx.author.id, "task": task, "created": datetime.utcnow()}
             self.command_tasks[name] = obj
             ctx._task_name = name
-            
+
             def done_callback(result: asyncio.Future):
                 try:
                     if not result.exception():
                         self.command_tasks.pop(name, None)
                 except asyncio.CancelledError:
                     self.command_tasks.pop(name, None)
-                
+
             task.add_done_callback(done_callback)
             return await task
-        
+
         return callback
-        
+
     async def update_command_callbacks(self):
-        return
         for command in self.walk_commands():
             command._callback = self._create_callback(command)
 

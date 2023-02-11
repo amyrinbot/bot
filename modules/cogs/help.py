@@ -27,7 +27,7 @@ class _HelpCommand(commands.HelpCommand):
             f"📝 Use {self.context.prefix}{self.invoked_with} [command]"
             "📝 for more info on a command"
         )
-        
+
     def _can_view(self, command: commands.Command):
         if self.context.bot.sync_is_owner(self.context.author):
             return True
@@ -48,10 +48,8 @@ class _HelpCommand(commands.HelpCommand):
         cogs: List[commands.Command] = [
             c
             for c in self.context.bot.cogs.values()
-            if any(
-                self._can_view(x)
-                for x in c.get_commands()
-            ) and len(c.get_commands()) > 0
+            if any(self._can_view(x) for x in c.get_commands())
+            and len(c.get_commands()) > 0
         ]
 
         fmt_cmds = sorted(
@@ -60,7 +58,11 @@ class _HelpCommand(commands.HelpCommand):
 
         if cogs:
             for cog in fmt_cmds:
-                cmds = [command for command in list(cog.walk_commands()) if self._can_view(command)]
+                cmds = [
+                    command
+                    for command in list(cog.walk_commands())
+                    if self._can_view(command)
+                ]
                 value = "\n".join(
                     f"• **{command.qualified_name}**" for command in cmds[:4]
                 )
@@ -77,12 +79,12 @@ class _HelpCommand(commands.HelpCommand):
 
     async def send_cog_help(self, cog):
         channel = self.get_destination()
-        
+
         if not cog.get_commands():
             return await channel.send("This cog is empty.")
-        
+
         cmds = [cmd for cmd in cog.get_commands() if self._can_view(cmd)]
-        
+
         if not cmds:
             await channel.send("You don't have permission to view this cog.")
 
@@ -171,7 +173,10 @@ class _HelpCommand(commands.HelpCommand):
         if len(group.commands) > 0:
             em.add_field(
                 name=f"Subcommands [{len(group.commands)}]",
-                value="> " + ", ".join(f"`{cmd.name}`" for cmd in group.commands if self._can_view(cmd)),
+                value="> "
+                + ", ".join(
+                    f"`{cmd.name}`" for cmd in group.commands if self._can_view(cmd)
+                ),
                 inline=False,
             )
 

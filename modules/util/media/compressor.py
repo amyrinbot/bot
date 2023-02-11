@@ -1,22 +1,27 @@
-import os
-import discord
-from io import BytesIO
-import tempfile
-from modules.util.executor import executor
-import mutagen
-from typing import List, TypedDict
-from modules.util.timer import Timer
 import inspect
 import json
+import os
+import tempfile
+from dataclasses import dataclass
+from io import BytesIO
+from typing import List, TypedDict
+
+import discord
+import mutagen
+
+from modules.util.executor import executor
+from modules.util.timer import Timer
+
 from .base import execute
 from .exceptions import FailedCompressionException
-from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class CompressionResult:
     path: os.PathLike
     compression_time: int
     sizes: TypedDict("sizes", {"old": int, "new": int})
+
 
 class Compressor:
     def __init__(
@@ -168,8 +173,4 @@ class Compressor:
         if os.stat(output_path).st_size > os.stat(path).st_size:
             raise FailedCompressionException(sizes)
 
-        return CompressionResult(
-            path=path,
-            compression_time=timer.time,
-            sizes=sizes
-        )
+        return CompressionResult(path=path, compression_time=timer.time, sizes=sizes)

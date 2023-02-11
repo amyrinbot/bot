@@ -20,11 +20,11 @@ from jishaku.codeblocks import codeblock_converter
 from jishaku.repl import KeywordTransformer
 
 from core.bot import amyrin
+from modules.util.updater import Updater
 from modules.views.paginator import WrapList, paginate
 from modules.views.pull import PullView
 
 from . import *
-from modules.util.updater import Updater
 
 
 class Developer(commands.Cog, command_attrs={"hidden": True}):
@@ -32,7 +32,7 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
         super().__init__()
         self.bot: amyrin = bot
         self.module_regex = re.compile(r"(?P<module>modules\/.+)\.py")
-    
+
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await self.bot.is_owner(ctx.author)
 
@@ -105,28 +105,31 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
         invoke_without_command=True,
     )
     async def _eval(self, ctx, *, code: codeblock_converter):
+        context = ctx
+        ctx = await self.bot.get_context(ctx.message, cls=commands.Context)
+
         async def handle_async_generator(func: AsyncGenerator):
             async for i in func():
                 if i is not None:
                     await self.send(ctx, i)
 
         code = code.content
-        
+
         # omg console.log in python 😱😰😰
         class console:
             @classmethod
             def log(cls, *args, **kwargs):
                 print(*args, **kwargs)
 
-        ref = None \
-            if ctx.message.reference is None \
-            else ctx.message.reference.resolved
+        ref = None if ctx.message.reference is None else ctx.message.reference.resolved
         env = {
+            "discord": discord,
+            "commands": commands,
             "author": ctx.message.author,
             "bot": self.bot,
             "channel": ctx.message.channel,
             "find": discord.utils.find,
-            "ctx": ctx,
+            "ctx": context,
             "get": discord.utils.get,
             "guild": ctx.message.guild,
             "message": ctx.message,
@@ -136,7 +139,7 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
             "commands": commands,
             "console": console,
             "ref": ref,
-            "rf": ref
+            "rf": ref,
         }
 
         """ Code Parsing """

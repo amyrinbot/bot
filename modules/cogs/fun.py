@@ -23,7 +23,8 @@ class Fun(commands.Cog):
     async def calculator(
         self,
         ctx: commands.Context,
-        *, expression: str = commands.param(
+        *,
+        expression: str = commands.param(
             default=None, description="The expression you want to calculate"
         ),
     ):

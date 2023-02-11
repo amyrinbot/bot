@@ -1,5 +1,7 @@
 import asyncio
+
 from discord.ext import commands
+
 
 class Updater:
     def __init__(self, context: commands.Context):

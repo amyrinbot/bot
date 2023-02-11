@@ -18,19 +18,25 @@ class Meta(commands.Cog):
     def __init__(self, bot):
         super().__init__()
         self.bot: amyrin = bot
-        
+
     def _format_uptime(self):
         delta_uptime = datetime.utcnow() - self.bot.uptime
         return humanfriendly.format_timespan(int(delta_uptime.total_seconds()))
-    
-    @command(description="Get my full source code or the source code of a specific command", aliases=["src"], examples=["{prefix}source calculator"])
-    async def source(self, ctx: commands.Context | discord.Interaction, *, command: str = None):
+
+    @command(
+        description="Get my full source code or the source code of a specific command",
+        aliases=["src"],
+        examples=["{prefix}source calculator"],
+    )
+    async def source(
+        self, ctx: commands.Context | discord.Interaction, *, command: str = None
+    ):
         URL = "https://github.com/amyrinbot/bot"
         BRANCH = "main"
-        
+
         if command is None:
             return await ctx.send(URL)
-        
+
         if command == "help":
             src = type(self.bot.help_command)
             filename = inspect.getsourcefile(src)
@@ -38,17 +44,17 @@ class Meta(commands.Cog):
             cmd = self.bot.get_command(command)
             if cmd is None:
                 return await ctx.send("Command was not found.")
-            
+
             src = cmd.callback.__code__
             filename = src.co_filename
-            
+
         if filename is None:
             return await ctx.send(f"Source for command `{command}` could not be found.")
-            
+
         lines, start = inspect.getsourcelines(src)
         end = start + len(lines) - 1
         location = os.path.join("bot", os.path.relpath(filename).replace("\\", "/"))
-        
+
         source_url = f"<{URL}/blob/{BRANCH}/{location}/#L{start}-L{end}>"
         await ctx.send(source_url)
 
@@ -63,11 +69,11 @@ class Meta(commands.Cog):
         )
 
         await ctx.send(embed=em)
-        
+
     @command(description="Get my uptime", examples=["{prefix}uptime"])
     async def uptime(self, ctx: commands.Context | discord.Interaction):
         uptime = self._format_uptime()
-        
+
         await ctx.send(f"I have been up for {uptime}")
 
     @command(

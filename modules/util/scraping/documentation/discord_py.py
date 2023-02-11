@@ -31,6 +31,7 @@ class FailedCachingTask(Exception):
         self.exception = exception
         self.task = task
 
+
 class Response:
     def __bool__(self):
         return any(
@@ -60,10 +61,12 @@ class RTFSResults:
 
         return embed
 
+
 @dataclass(frozen=True)
 class Attribute:
     name: str
     url: str
+
 
 @dataclass(frozen=True)
 class Documentation:
@@ -157,10 +160,10 @@ class DocScraper:
         )
 
         self._setup_logger()
-        
+
         if not getattr(self.strgcls, "_pages", None):
             self.strgcls._pages = {}
-        
+
         if not getattr(self.strgcls, "_docs_caching_progress", None):
             self.strgcls._docs_caching_progress = {}
 
@@ -292,7 +295,7 @@ class DocScraper:
     async def _build_rtfs_cache(self, recache: bool = False, updater: Callable = None):
         if self.strgcls._rtfs_cache != {} and not recache:
             return
-        
+
         if recache:
             self.strgcls._rtfs_cache = {}
 
@@ -304,7 +307,7 @@ class DocScraper:
 
         if not os.path.isdir(path):
             await self._shell(f"git clone {url} {rtfs_repo}")
-            
+
         commit_path = os.path.join(rtfs_repo, ".git/refs/heads/master")
 
         with open(commit_path) as f:
@@ -333,9 +336,7 @@ class DocScraper:
             file = item.get("file")
             start, end = item.get("position")
 
-            file_url = urlparse(repo_url + file)._replace(
-                fragment=f"L{start}-L{end}"
-            )
+            file_url = urlparse(repo_url + file)._replace(fragment=f"L{start}-L{end}")
 
             item = RTFSItem(name, file_url.geturl())
             results.append(item)
@@ -346,7 +347,9 @@ class DocScraper:
 
         return RTFSResults(matches)
 
-    async def _get_html(self, url: str, id: str, timeout: int = 0, wait: bool = True) -> str:
+    async def _get_html(
+        self, url: str, id: str, timeout: int = 0, wait: bool = True
+    ) -> str:
         page = await self._browser.new_page()
 
         await page.goto(url)
@@ -391,53 +394,57 @@ class DocScraper:
         parsed_url = urlparse(full_url)
 
         parent = element.parent
-        
+
         full_name = element.text
         name = element.attrs.get("id")
         documentation = parent.find("dd")
         description = []
         examples = []
-        
+
         def format_attributes(item: Tag) -> List[Attribute]:
             results: set[str, str] = []
             items = item.find_all("li", class_="py-attribute-table-entry")
             for item in items:
                 name = " ".join(x.text for x in item.contents).strip()
-                href = item.find("a") \
-                    .get("href")
+                href = item.find("a").get("href")
                 url = urljoin(full_url, href)
                 results.append((name, url))
-            
+
             return results
-                    
+
         attributes: Dict[str, List[Attribute]] = {}
         attribute_list = parent.find("div", class_="py-attribute-table")
         if attribute_list:
-            items = attribute_list.findChildren("div", class_="py-attribute-table-column")
+            items = attribute_list.findChildren(
+                "div", class_="py-attribute-table-column"
+            )
             if items:
                 attributes["attributes"] = format_attributes(items[0])
                 if len(items) >= 2:
                     attributes["methods"] = format_attributes(items[1])
 
         fields = {}
-        
-        if supported_operations := documentation.find("div", class_="operations", recursive=False):
+
+        if supported_operations := documentation.find(
+            "div", class_="operations", recursive=False
+        ):
             items: List[set[str, str]] = []
-            for supported_operation in supported_operations.findChildren("dl", class_="describe"):
-                operation = supported_operation \
-                    .find("span", class_="descname") \
-                    .text.strip()
+            for supported_operation in supported_operations.findChildren(
+                "dl", class_="describe"
+            ):
+                operation = supported_operation.find(
+                    "span", class_="descname"
+                ).text.strip()
                 desc = self._get_text(
                     supported_operation.find("dd", recursive=False), parsed_url
                 ).strip()
                 items.append((operation, desc))
-                
+
             if items:
                 fields["Supported Operations"] = "\n".join(
-                    f"> {operation}\n{desc}"
-                    for operation, desc in items
+                    f"> {operation}\n{desc}" for operation, desc in items
                 )
-        
+
         field_list = documentation.find("dl", class_="field-list", recursive=False)
         if field_list:
             for field in field_list.findChildren("dt"):
@@ -452,9 +459,7 @@ class DocScraper:
                 for value in values:
                     texts = []
                     for element in value.contents:
-                        text = self._get_text(
-                            element, parsed_url
-                        )
+                        text = self._get_text(element, parsed_url)
 
                         texts.append(text.replace("\n", " "))
 
@@ -478,7 +483,9 @@ class DocScraper:
 
             description.append("".join(elements))
 
-        for child in documentation.find_all("div", class_=["highlight-python3", "highlight-default"], recursive=False):
+        for child in documentation.find_all(
+            "div", class_=["highlight-python3", "highlight-default"], recursive=False
+        ):
             examples.append(child.find("pre").text)
 
         if version_modified := documentation.find("span", class_="versionmodified"):
@@ -497,7 +504,7 @@ class DocScraper:
             examples=examples,
             url=url,
             fields=fields,
-            attributes=attributes
+            attributes=attributes,
         )
 
     async def _get_all_manual_documentations(self, url: str) -> List[Documentation]:
@@ -527,7 +534,7 @@ class DocScraper:
     ) -> Dict[str, List[Documentation]]:
         if self.strgcls._docs_cache != [] and not recache:
             return
-        
+
         if recache:
             self.strgcls._docs_cache = []
 
@@ -547,7 +554,7 @@ class DocScraper:
 
         content = await self._get_html(self._base_url, "manuals")
         manuals = await bs4(content)
-        
+
         for name, _ in manuals:
             self.strgcls._docs_caching_progress[name] = None
 
@@ -555,7 +562,7 @@ class DocScraper:
         for name, manual in manuals:
             try:
                 documentations = await self._get_all_manual_documentations(manual)
-                
+
                 if name not in results.keys():
                     results[name] = []
 
@@ -589,7 +596,9 @@ class DocScraper:
     async def _wait_for_docs(self, name: str, updater: Callable = None):
         while True:
             if self.strgcls._docs_caching_task.cancelled():
-                await self.update(updater, f"Documentation caching task has been cancelled, aborting.")
+                await self.update(
+                    updater, f"Documentation caching task has been cancelled, aborting."
+                )
                 return False
             elif elem := discord.utils.get(self.strgcls._docs_cache, name=name):
                 try:
@@ -598,13 +607,17 @@ class DocScraper:
                     pass
                 return elem
             elif any(error for _, error in self.strgcls._docs_caching_progress.items()):
-                crashed = [name for name, error in self.strgcls._docs_caching_progress.items() if error]
+                crashed = [
+                    name
+                    for name, error in self.strgcls._docs_caching_progress.items()
+                    if error
+                ]
                 if len(crashed) == 1:
                     name = crashed[0]
                     await self.update(
                         updater,
                         f"Element could not be found, this could be due to the {name} manual "
-                        "caching task having crashed."
+                        "caching task having crashed.",
                     )
                 else:
                     amount = len(crashed)
@@ -612,13 +625,16 @@ class DocScraper:
                     await self.update(
                         updater,
                         f"Element could not be found, this could be due to {amount}/{total_amount} manual "
-                        "caching tasks having crashed."
+                        "caching tasks having crashed.",
                     )
                 return False
             elif self.strgcls._docs_caching_task.done():
                 await self.update(updater, "Element could not be found")
                 return False
-            msg = await self.update(updater, f"{LOADING} Waiting for caching task, processing command once it's done.")
+            msg = await self.update(
+                updater,
+                f"{LOADING} Waiting for caching task, processing command once it's done.",
+            )
             await asyncio.sleep(1)
 
     async def get_documentation(
@@ -649,7 +665,7 @@ class DocScraper:
     async def _build_rtfm_cache(self, recache: bool = False, updater: Callable = None):
         if getattr(self.strgcls, "_inv", None) is not None and not recache:
             return
-        
+
         partial = functools.partial(Inventory, url=self._inv_url)
         loop = asyncio.get_running_loop()
         self.strgcls._inv = await loop.run_in_executor(None, partial)
@@ -680,21 +696,26 @@ class DocScraper:
         if not self.strgcls._rtfm_caching_task.done():
             await self.update(updater, "Waiting for RTFM caching to be done")
             await self.strgcls._rtfm_caching_task
-            
+
         if self.strgcls._rtfm_caching_task.exception() and self.strgcls._inv is None:
-            
-            
+
             raise FailedCachingTask(
                 "rtfm",
                 self.strgcls._rtfm_caching_task.exception(),
-                self.strgcls._rtfm_caching_task
+                self.strgcls._rtfm_caching_task,
             )
-                
+
         with Timer() as timer:
             # implement task error handling later
 
             def get_name(obj: DataObjStr) -> str:
-                name = obj.name if obj.name else obj.dispname if obj.dispname not in ["-", None] else None
+                name = (
+                    obj.name
+                    if obj.name
+                    else obj.dispname
+                    if obj.dispname not in ["-", None]
+                    else None
+                )
                 original_name = name
 
                 if obj.domain == "std":

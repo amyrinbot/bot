@@ -1,47 +1,46 @@
-from typing import Union
 import random
 import string
 from io import StringIO
+from typing import Union
 
 import discord
-from discord.ext import commands
-from modules.util.imaging.converter import ImageConverter
 from discord.context_managers import Typing
+from discord.ext import commands
 from discord.ext.commands.context import DeferTyping
+
+from modules.util.imaging.converter import ImageConverter
+
 
 class EditTyping(Typing):
     """Custom Typing subclass to support cancelling typing when the message content changed"""
-    
+
     def __init__(self, context: commands.Context) -> None:
         self.context = context
         super().__init__(context)
-        
+
     async def __aenter__(self) -> None:
         if self.context.message.id not in self.context.bot.command_cache.keys():
             return await super().__aenter__()
-        
+
     async def __aexit__(self, exc_type, exc, traceback) -> None:
         if self.context.message.id not in self.context.bot.command_cache.keys():
             return await super().__aexit__(exc_type, exc, traceback)
-        
-    
+
 
 class Context(commands.Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
     async def to_image(self, content: str = None):
         return await ImageConverter().convert(self, (content or self.message.content))
-    
+
     def typing(self, *, ephemeral: bool = False) -> Union[Typing, DeferTyping]:
         if self.interaction is None:
             return EditTyping(self)
         return DeferTyping(self, ephemeral=ephemeral)
 
     async def send(self, content: str = None, *args, **kwargs):
-        if (
-            self.message.id in self.bot.command_cache.keys()
-        ):
+        if self.message.id in self.bot.command_cache.keys():
             entries = self.bot.command_cache[self.message.id]
             if len(entries) > 1:
                 for message in entries[:-1]:
@@ -50,10 +49,15 @@ class Context(commands.Context):
                     except discord.HTTPException:
                         pass
             kwargs.pop("reference", None)
+            if file := kwargs.pop("file", None):
+                if kwargs.get("attachments"):
+                    kwargs["attachments"].append(file)
+                else:
+                    kwargs["attachments"] = [file]
             func = entries[-1].edit
         else:
             func = super().send
-        
+
         if content is not None:
             if len(content) > 2000:
                 buf = StringIO()
@@ -65,16 +69,16 @@ class Context(commands.Context):
                     *args,
                     **kwargs,
                 )
-        
+
         msg = await func(content=content, *args, **kwargs)
-        
+
         if not self.bot.command_cache.get(self.message.id):
             self.bot.command_cache[self.message.id] = []
-            
+
         self.bot.command_cache[self.message.id].append(msg)
-        
+
         return msg
-            
+
     async def string_to_file(
         self, content: str = None, filename: str = "message.txt"
     ) -> discord.File:
@@ -104,8 +108,10 @@ class Context(commands.Context):
             **kwargs,
         )
 
+
 async def setup(bot):
     bot.context = Context
-    
+
+
 async def teardown(bot):
     bot.context = commands.Context

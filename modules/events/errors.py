@@ -5,9 +5,9 @@ import sys
 import traceback
 
 import discord
+import humanfriendly
 from discord import app_commands
 from discord.ext import commands
-import humanfriendly
 
 
 class CommandErrorHandler(commands.Cog):
@@ -48,12 +48,14 @@ class CommandErrorHandler(commands.Cog):
 
         elif isinstance(error, commands.NotOwner):
             return await ctx.send("This is an owner-only command.")
-        
+
         elif isinstance(error, commands.BadArgument):
             return await ctx.send(str(error))
-        
+
         # thanks chatgpt
-        elif isinstance(error, (app_commands.CommandOnCooldown, commands.CommandOnCooldown)):
+        elif isinstance(
+            error, (app_commands.CommandOnCooldown, commands.CommandOnCooldown)
+        ):
             retry_after = humanfriendly.format_timespan(round(error.retry_after, 1))
             options = [
                 (
@@ -63,9 +65,9 @@ class CommandErrorHandler(commands.Cog):
                     "then thou mayest try thy command anew. Be patient, kind soul, and all shall be well."
                 ),
                 (
-                   "Verily, good friend, thou must grant thy command a brief respite. "
-                   "Tis too hasty, and needs a moment to recover. "
-                   "Wait {}, then try thy command once more. Have faith, all shall be well." 
+                    "Verily, good friend, thou must grant thy command a brief respite. "
+                    "Tis too hasty, and needs a moment to recover. "
+                    "Wait {}, then try thy command once more. Have faith, all shall be well."
                 ),
                 (
                     "Hark! Thou must be patient, gentle user. "
@@ -77,14 +79,17 @@ class CommandErrorHandler(commands.Cog):
                     "Hold, brave user! Thy command doth require a moment of peace. "
                     "Wait {}, and then thou mayest attempt thy command once more. "
                     "Have no doubt, all shall turn out well in the end."
-                )
+                ),
             ]
             msg = random.choice(options).format(retry_after)
             return await ctx.reply(msg)
-        
+
         # thanks chatgpt
         elif isinstance(error, commands.MaxConcurrencyReached):
-            if error.per is commands.BucketType.user or error.per is commands.BucketType.member:
+            if (
+                error.per is commands.BucketType.user
+                or error.per is commands.BucketType.member
+            ):
                 msg = (
                     "Alack and alas, good sir or madam! Thy command hath reached the maximum concurrent usage per user. "
                     "Pray, do hold thy horses and bide a moment, for the previous command must be completed ere thou mayest proceed. "
@@ -119,9 +124,8 @@ class CommandErrorHandler(commands.Cog):
                     "Thou must exercise patience and wait until the former command is done. "
                     "Then and only then, thou may proceed with thy request. Thy perseverance shall be rewarded. Fare thee well!"
                 )
-                
+
             return await ctx.reply(msg)
-                
 
         else:
             if await self.bot.is_owner(ctx.author):

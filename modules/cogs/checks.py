@@ -1,7 +1,8 @@
 from discord.ext import commands
 
-from core.bot import amyrin
 import config
+from core.bot import amyrin
+
 
 class Checks(commands.Cog):
     def __init__(self, bot):
@@ -12,11 +13,14 @@ class Checks(commands.Cog):
     async def debug_check(self, ctx: commands.Context):
         if not self.bot.debug:
             return True
-        
+
         if self.bot.debug and ctx.interaction:
             return False
 
-        if not await self.bot.is_owner(ctx.author) and ctx.author.id not in config.ALLOWED_ON_DEBUG:
+        if (
+            not await self.bot.is_owner(ctx.author)
+            and ctx.author.id not in config.ALLOWED_ON_DEBUG
+        ):
             prefix = await self.bot.get_formatted_prefix(False)
 
             await ctx.reply(

@@ -58,10 +58,18 @@ class HotReload(commands.Cog):
                     continue
                 else:
                     self.bot.logger.debug(f"Reloaded extension: {extension}")
-                    
-                    for relative, _ in filter(lambda x: extension in x[1], self.bot.module_relatives.items()):
-                        await self.bot.reload_extension(relative)
-                        self.bot.logger.debug(f"Reloaded {extension} relative: {relative}")
+
+                    for relative, _ in filter(
+                        lambda x: extension in x[1], self.bot.module_relatives.items()
+                    ):
+                        try:
+                            await self.bot.reload_extension(relative)
+                        except Exception:
+                            pass
+                        else:
+                            self.bot.logger.debug(
+                                f"Reloaded {extension} relative: {relative}"
+                            )
                 finally:
                     self.last_modified_time[extension] = time
 
