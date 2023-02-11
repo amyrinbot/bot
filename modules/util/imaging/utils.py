@@ -15,6 +15,23 @@ def is_animated(img: bytes | BytesIO):
 
     with Image.open(img) as image:
         return image.is_animated
+    
+@executor()
+def convert_image(img: bytes | BytesIO, fmt: str = "png"):
+    img = copy(img)
+    
+    if isinstance(img, bytes):
+        img = BytesIO(img)
+        
+    buf = BytesIO()
+    with Image.open(img) as image:
+        if fmt.lower() == "jpeg":
+            image = image.convert("RGB")
+        
+        image.save(buf, fmt)
+        
+    buf.seek(0)
+    return buf
 
 
 @executor()

@@ -117,10 +117,10 @@ class Imaging(commands.Cog):
         argument2: str = commands.param(description="Text or image"),
     ):
         new_argument1, _ = await ImageConverter().convert(
-            ctx, argument1, relative=False, fallback=False
+            ctx, argument1, relative=False, animated=False, fallback=False
         )
         new_argument2, _ = await ImageConverter().convert(
-            ctx, argument2, relative=False, fallback=False
+            ctx, argument2, relative=False, animated=False, fallback=False
         )
 
         new_argument1 = new_argument1 or argument1
@@ -140,7 +140,7 @@ class Imaging(commands.Cog):
         argument: str = commands.param(description="Text or image"),
     ):
         new_argument, _ = await ImageConverter().convert(
-            ctx, argument, relative=False, fallback=False
+            ctx, argument, relative=False, animated=False, fallback=False
         )
 
         new_argument = new_argument or argument
@@ -160,7 +160,7 @@ class Imaging(commands.Cog):
         argument: str = commands.param(description="Text or image"),
     ):
         new_argument, _ = await ImageConverter().convert(
-            ctx, argument, relative=False, fallback=False
+            ctx, argument, relative=False, animated=False, fallback=False
         )
 
         new_argument = new_argument or argument

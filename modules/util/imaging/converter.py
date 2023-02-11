@@ -66,6 +66,7 @@ class ImageConverter(commands.Converter):
         argument: str,
         *,
         relative: bool = True,
+        animated: bool = True,
         fallback: bool = True,
     ) -> str:
         argument = argument.strip()
@@ -89,9 +90,11 @@ class ImageConverter(commands.Converter):
 
         try:
             user = await SpecificUserConverter().convert(ctx, argument)
-        except Exception as exc:
+        except Exception:
             pass
         else:
+            if not animated:
+                return BytesIO(await user.avatar.with_format("png").read()), True
             return BytesIO(await user.avatar.read()), True
 
         if re.match(URL_REGEX, argument):
@@ -113,6 +116,8 @@ class ImageConverter(commands.Converter):
                 return result, True
 
         if fallback:
+            if not animated:
+                return BytesIO(await ctx.author.avatar.with_format("png").read()), False
             return BytesIO(await ctx.author.avatar.read()), False
         return None, False
 

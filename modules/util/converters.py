@@ -109,13 +109,21 @@ class URLConverter(commands.Converter):
 class SpecificUserConverter(commands.Converter):
     """User Converter class that only supports IDs and mentions"""
 
+    async def _get_user(self, bot: commands.Bot, argument: int):
+        user = bot.get_user(argument)
+        if user:
+            return user
+        return await bot.fetch_user(argument)
+
     async def convert(self, ctx: commands.Context, argument: str):
-        if all(char.isdigit() for char in argument):
-            if user := ctx.bot.get_user(int(argument)):
+        is_digits = all(char.isdigit() for char in argument)
+        
+        if is_digits:
+            if user := await self._get_user(ctx.bot, int(argument)):
                 return user
 
         if match := re.match(r"<@!?([0-9]+)>", argument):
-            if user := ctx.bot.get_user(int(match.group(1))):
+            if user := await self._get_user(ctx.bot, int(match.group(1))):
                 return user
 
         raise commands.BadArgument("Failed to convert argument to user")

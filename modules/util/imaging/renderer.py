@@ -13,6 +13,7 @@ from PIL import Image, ImageSequence
 from modules.util.executor import run_blocking_func
 from modules.util.imaging.exceptions import (CharacterLimitExceeded,
                                              InvalidTemplate, TooManyFrames)
+from modules.util.imaging.utils import convert_image
 from modules.util.media.base import execute
 from modules.util.timer import Timer
 
@@ -112,7 +113,6 @@ class Renders:
         template_path = os.path.join(templates_path, f"{template}.zip")
 
         if not os.path.isfile(template_path):
-            print(template_path)
             raise InvalidTemplate(template)
 
         command.extend(["-v", f"{templates_path}:/share/templates"])
@@ -129,6 +129,8 @@ class Renders:
                 image, _ = await run_blocking_func(
                     Renders.centered_text, image, img_width=0.85
                 )
+            else:
+                image = await convert_image(image, "jpeg")
 
             if hasattr(image, "read"):
                 image = image.read()
