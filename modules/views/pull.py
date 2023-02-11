@@ -67,5 +67,4 @@ class PullView(View):
     ) -> None:
         await interaction.response.defer()
         await self.disable_all(interaction)
-        command = self.context.bot.get_command("restart")
-        await command(self.context)
+        await self.context.invoke("restart", self.context)

@@ -296,7 +296,7 @@ class Documentation(commands.Cog):
             description="The query you want to search for in the default (discord.py) documentation"
         ),
     ):
-        await self.rtfm_discord_py(ctx, query=query)
+        await ctx.invoke(self.rtfm_discord_py, ctx, query=query)
 
     @command(
         rtfm.command,
@@ -334,7 +334,7 @@ class Documentation(commands.Cog):
             description="The query you want to search for in the default (discord.py) source code"
         ),
     ):
-        await self.rtfs_discord_py(ctx, query=query)
+        await ctx.invoke(self.rtfs_discord_py, ctx, query=query)
 
     @command(
         rtfs.command,
@@ -387,7 +387,7 @@ class Documentation(commands.Cog):
             description="The query you want to search for in the default (discord.py) documentation"
         ),
     ):
-        await self.docs_discord_py(ctx, query=query)
+        await ctx.invoke(self.docs_discord_py, ctx, query=query)
 
     @command(
         documentation.command,

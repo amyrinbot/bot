@@ -1,3 +1,4 @@
+import inspect
 import random
 import string
 from io import StringIO
@@ -38,6 +39,13 @@ class Context(commands.Context):
         if self.interaction is None:
             return EditTyping(self)
         return DeferTyping(self, ephemeral=ephemeral)
+    
+    async def invoke(self, command: commands.Command | str, *args, **kwargs):
+        if isinstance(command, str):
+            command = self.bot.get_command(command)
+            
+        self.command = command
+        return await command(*args, **kwargs)
 
     async def send(self, content: str = None, *args, **kwargs):
         if self.message.id in self.bot.command_cache.keys():
@@ -54,7 +62,13 @@ class Context(commands.Context):
                     kwargs["attachments"].append(file)
                 else:
                     kwargs["attachments"] = [file]
-            func = entries[-1].edit
+            msg = entries[-1]
+            try:
+                await self.fetch_message(msg.id)
+            except discord.NotFound:
+                func = super().send
+            else:
+                func = entries[-1].edit
         else:
             func = super().send
 
@@ -63,9 +77,14 @@ class Context(commands.Context):
                 buf = StringIO()
                 buf.write(content)
                 buf.seek(0)
+                file = discord.File(buf, filename="message.txt")
+                if "file" not in inspect.signature(func).parameters.values():
+                    kwargs["attachments"] = [file]
+                else:
+                    kwargs["file"] = file
+                    
                 return await func(
                     content="Message was over 2000 characters, so it has been turned into a text file",
-                    file=discord.File(buf, filename="message.txt"),
                     *args,
                     **kwargs,
                 )

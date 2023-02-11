@@ -133,7 +133,7 @@ class Utility(commands.Cog):
             default=None,
         ),
     ):
-        await self.nginx_upload(ctx, file)
+        await ctx.invoke(self.nginx_upload, ctx, file)
 
     @command(
         nginx.command,
@@ -227,8 +227,7 @@ class Utility(commands.Cog):
         invoke_without_command=True,
     )
     async def tasks(self, ctx):
-        ctx.command = self.bot.get_command("task list")
-        await ctx.command(ctx)
+        await ctx.invoke("task list", ctx)
 
     @command(
         tasks.command,
