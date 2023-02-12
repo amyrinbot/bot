@@ -95,11 +95,11 @@ class ImageConverter(commands.Converter):
                 return result, True
 
         try:
-            emoji = await commands.PartialEmojiConverter().convert(ctx, argument)
+            emoji_ = await commands.PartialEmojiConverter().convert(ctx, argument)
         except Exception:
             pass
         else:
-            return BytesIO(await emoji.read()), True
+            return BytesIO(await emoji_.read()), True
 
         if emoji.is_emoji(argument):
             url = "https://emojicdn.elk.sh/" + argument
