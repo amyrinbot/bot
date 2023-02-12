@@ -96,7 +96,7 @@ class URLConverter(commands.Converter):
     ) -> str:
         parsed_url = urlparse(argument)
 
-        if parsed_url.netloc in (
+        if str(parsed_url.netloc).split(":")[0] in (
             "127.0.0.1",
             "localhost",
             "0.0.0.0",
