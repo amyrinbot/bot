@@ -42,3 +42,4 @@ imagetext_py==2.1.2
 Pillow==9.4.0
 expiringdict==1.2.2
 eyed3==0.9.7
+emoji==2.2.0
