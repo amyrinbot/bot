@@ -65,7 +65,7 @@ class Imaging(commands.Cog):
                 text = url
 
             if image is None:
-                image = BytesIO(await ctx.author.avatar.with_size(512).read())
+                image = BytesIO(await ctx.author.avatar.with_size(1024).read())
         elif image is not None and not text:
             raise commands.MissingRequiredArgument(
                 inspect.Parameter("text", inspect.Parameter.KEYWORD_ONLY)
