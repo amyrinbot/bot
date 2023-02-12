@@ -376,7 +376,7 @@ class Documentation(commands.Cog):
     @command(
         commands.hybrid_group,
         aliases=["docs"],
-        description="Get documentation of a module",
+        description="Get documentation of an attribute, class or function",
         examples=["{prefix}docs commands.bot"],
     )
     async def documentation(
@@ -393,7 +393,7 @@ class Documentation(commands.Cog):
         documentation.command,
         name="latest",
         aliases=["dpy", "d.py"],
-        description="Get documentation of a discord.py module",
+        description="Get documentation of a discord.py attribute, class or function",
         examples=["{prefix}docs dpy commands.bot"],
     )
     async def docs_discord_py(
