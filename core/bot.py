@@ -69,7 +69,7 @@ class amyrin(commands.Bot):
 
         self.module_relatives: Dict[str, List[str]] = {}
 
-    @tasks.loop(hours=3)
+    @tasks.loop(minutes=30)
     async def pfp_rotation(self):
         if config.DEBUG:
             return
