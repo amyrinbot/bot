@@ -204,7 +204,7 @@ class Renders:
                 wrapped_text, t_size, font, draw_emojis=True
             )
             c_height = int(
-                t_height * 1.05
+                t_height * 1.15
             )  # objectively looks better /j (just adds borders)
             min_height = int(height / 2.5)
 
