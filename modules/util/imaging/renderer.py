@@ -189,7 +189,7 @@ class Renders:
             durations = []
 
             width, height = size
-            c_width = width * 0.95  # subjective design choice for borders
+            c_width = width * 0.85  # subjective design choice for borders
             t_size = 130
 
             wrapped_text = text_wrap(
