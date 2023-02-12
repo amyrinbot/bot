@@ -188,7 +188,7 @@ class Renders:
 
             width, height = size
             c_width = width * 0.95  # subjective design choice for borders
-            t_size = 100
+            t_size = 130
 
             wrapped_text = text_wrap(
                 text,
@@ -204,7 +204,7 @@ class Renders:
             c_height = int(
                 t_height * 1.05
             )  # objectively looks better /j (just adds borders)
-            min_height = 250
+            min_height = int(height / 2.5)
 
             if c_height < min_height:
                 c_height = min_height  # also just a subjective design choice
