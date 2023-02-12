@@ -238,7 +238,8 @@ class Renders:
                         break
 
                     durations.append(frame.info.get("duration", 5))
-                    frame = frame.resize(size, Image.ANTIALIAS)
+                    if frame.size != size:
+                        frame = frame.resize(size, Image.ANTIALIAS)
                     with Image.new(
                         "RGBA", full_img_size, (255, 255, 255, 0)
                     ) as full_img:
