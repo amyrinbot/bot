@@ -53,7 +53,7 @@ class Meta(commands.Cog):
 
         lines, start = inspect.getsourcelines(src)
         end = start + len(lines) - 1
-        location = os.path.join("bot", os.path.relpath(filename).replace("\\", "/"))
+        location = os.path.relpath(filename).replace("\\", "/")
 
         source_url = f"<{URL}/blob/{BRANCH}/{location}/#L{start}-L{end}>"
         await ctx.send(source_url)
