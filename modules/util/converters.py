@@ -148,6 +148,6 @@ class FileConverter(commands.Converter):
                     inspect.Parameter("file", inspect.Parameter.KEYWORD_ONLY)
                 )
         else:
-            attachment = URLObject(file)
+            attachment = URLObject(await URLConverter().convert(ctx, file))
 
         return attachment
