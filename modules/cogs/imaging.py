@@ -21,11 +21,11 @@ class Imaging(commands.Cog):
         self.bot: amyrin = bot
 
     async def _handle_makesweet(
-        self, ctx: commands.Context, template: str, size: tuple[int, int], *images
+        self, ctx: commands.Context, template: str, size: tuple[int, int], *images,, *kwargs
     ) -> None:
         try:
             async with ctx.typing():
-                result = await render(Renders.makesweet, template, size, *images)
+                result = await render(Renders.makesweet, template, size, *images, **kwargs)
         except CharacterLimitExceeded as exc:
             return await ctx.send(
                 f"One of the given texts ({exc.length}) exceeds the maximum character limit of {exc.limit} characters"
@@ -117,10 +117,10 @@ class Imaging(commands.Cog):
         argument2: str = commands.param(description="Text or image"),
     ):
         new_argument1, _ = await ImageConverter().convert(
-            ctx, argument1, relative=False, animated=False, fallback=False
+            ctx, argument1, relative=False, animated=False, fallback=False, allow_emojis=False
         )
         new_argument2, _ = await ImageConverter().convert(
-            ctx, argument2, relative=False, animated=False, fallback=False
+            ctx, argument2, relative=False, animated=False, fallback=False, allow_emojis=False
         )
 
         new_argument1 = new_argument1 or argument1
