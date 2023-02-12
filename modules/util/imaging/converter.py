@@ -61,6 +61,7 @@ class ImageConverter(commands.Converter):
         relative: bool = True,
         animated: bool = True,
         fallback: bool = True,
+        allow_emojis: bool = True,
     ) -> str:
         argument = argument.strip()
         message = ctx.message
@@ -101,7 +102,7 @@ class ImageConverter(commands.Converter):
         else:
             return BytesIO(await emoji_.read()), True
 
-        if emoji.is_emoji(argument):
+        if allow_emojis and emoji.is_emoji(argument):
             url = "https://emojicdn.elk.sh/" + argument
             if result := await read_url(
                 url, ctx.bot.session, params={"style": "twitter"}
