@@ -225,7 +225,10 @@ class amyrin(commands.Bot):
         command._original_callback = command.callback
 
         async def callback(cog, *args, **kwargs):
-            ctx = args[0]
+            if isinstance(cog, commands.Context):
+                ctx = cog
+            else: 
+                ctx = args[0]
             command: commands.Command = ctx.command
             cb = command._original_callback
 
