@@ -1,5 +1,5 @@
 import re
-import unicodedata
+import emoji
 from io import BytesIO
 
 from aiohttp import ClientSession
@@ -52,13 +52,6 @@ async def parse_url(url: str, session: ClientSession):
     return await read_url(url, session)
 
 
-# thanks chatgpt
-def is_emoji(content: str):
-    for char in content:
-        if unicodedata.category(char) in ("So", "Sk"):
-            return char
-
-
 class ImageConverter(commands.Converter):
     async def convert(
         self,
@@ -108,8 +101,8 @@ class ImageConverter(commands.Converter):
         else:
             return BytesIO(await emoji.read()), True
 
-        if len(argument) == 1 and (emoji := is_emoji(argument)):
-            url = "https://emojicdn.elk.sh/" + emoji
+        if emoji.is_emoji(argument):
+            url = "https://emojicdn.elk.sh/" + argument
             if result := await read_url(
                 url, ctx.bot.session, params={"style": "twitter"}
             ):
