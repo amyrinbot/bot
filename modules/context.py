@@ -57,17 +57,17 @@ class Context(commands.Context):
                     except discord.HTTPException:
                         pass
             kwargs.pop("reference", None)
-            if file := kwargs.pop("file", None):
-                if kwargs.get("attachments"):
-                    kwargs["attachments"].append(file)
-                else:
-                    kwargs["attachments"] = [file]
             msg = entries[-1]
             try:
                 await self.fetch_message(msg.id)
             except discord.NotFound:
                 func = super().send
             else:
+                if file := kwargs.pop("file", None):
+                    if kwargs.get("attachments"):
+                        kwargs["attachments"].append(file)
+                    else:
+                        kwargs["attachments"] = [file]
                 func = entries[-1].edit
         else:
             func = super().send
@@ -78,7 +78,7 @@ class Context(commands.Context):
                 buf.write(content)
                 buf.seek(0)
                 file = discord.File(buf, filename="message.txt")
-                if "file" not in inspect.signature(func).parameters.values():
+                if "file" not in [param.name for param in inspect.signature(func).parameters.values()]:
                     kwargs["attachments"] = [file]
                 else:
                     kwargs["file"] = file

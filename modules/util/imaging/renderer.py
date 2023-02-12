@@ -167,13 +167,13 @@ class Renders:
 
         gif_char_limit = 1000
         char_limit = 2000
-        frame_limit = 200
+        frame_limit = 500
         text_length = len(text)
 
         if text_length > char_limit and not bypass_charlimit:
             raise CharacterLimitExceeded(text_length, char_limit)
 
-        font = FontDB.Query("arial-unicode-bold arabic")
+        font = FontDB.Query("futura-condensed-extra-bold arabic")
 
         with Image.open(image) as img:
             if hasattr(img, "n_frames"):
@@ -188,7 +188,7 @@ class Renders:
 
             width, height = size
             c_width = width * 0.95  # subjective design choice for borders
-            t_size = 150
+            t_size = 100
 
             wrapped_text = text_wrap(
                 text,
@@ -204,7 +204,7 @@ class Renders:
             c_height = int(
                 t_height * 1.05
             )  # objectively looks better /j (just adds borders)
-            min_height = 150
+            min_height = 250
 
             if c_height < min_height:
                 c_height = min_height  # also just a subjective design choice
@@ -252,7 +252,7 @@ class Renders:
                     buffer,
                     format="gif",
                     save_all=True,
-                    append_images=None if len(processed) == 1 else processed[1:],
+                    append_images=[] if len(processed) == 1 else processed[1:],
                     duration=durations,
                     loop=0,
                     disposal=2,
