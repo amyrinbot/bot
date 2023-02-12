@@ -24,7 +24,7 @@ class CommandErrorHandler(commands.Cog):
             if cog._get_overridden_method(cog.cog_command_error) is not None:
                 return
 
-       if isinstance(error, commands.NotOwner):
+        if isinstance(error, commands.NotOwner):
             return await ctx.send("This is an owner-only command.")
 
         ignored = (
