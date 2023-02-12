@@ -155,6 +155,8 @@ class Renders:
         output_path = os.path.join(td.name, "output.gif")
         with open(output_path, "rb") as f:
             data = BytesIO(f.read())
+            
+        td.cleanup()
 
         return data, True
 
