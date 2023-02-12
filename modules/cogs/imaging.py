@@ -21,7 +21,7 @@ class Imaging(commands.Cog):
         self.bot: amyrin = bot
 
     async def _handle_makesweet(
-        self, ctx: commands.Context, template: str, size: tuple[int, int], *images,, *kwargs
+        self, ctx: commands.Context, template: str, size: tuple[int, int], *images, **kwargs
     ) -> None:
         try:
             async with ctx.typing():
