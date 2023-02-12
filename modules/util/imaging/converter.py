@@ -94,7 +94,7 @@ class ImageConverter(commands.Converter):
 
         if re.match(URL_REGEX, argument):
             parsed_url = urlparse(argument)
-            if str(parsed_url.netloc) not in ("127.0.0.1", "localhost", "0.0.0.0"):
+            if str(parsed_url.netloc).split(":")[0] not in ("127.0.0.1", "localhost", "0.0.0.0"):
                 if result := await parse_url(argument, ctx.bot.session):
                     return result, True
 
