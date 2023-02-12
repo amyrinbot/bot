@@ -45,7 +45,7 @@ class Meta(commands.Cog):
             if cmd is None:
                 return await ctx.send("Command was not found.")
 
-            src = cmd.callback.__code__
+            src = getattr(cmd, "_original_callback", cmd.callback).__code__
             filename = src.co_filename
 
         if filename is None:
