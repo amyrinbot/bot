@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from modules.util.converters import SpecificUserConverter
 from modules.util.executor import executor
+from urllib.parse import urlparse
 
 TENOR_REGEX = r"https?:\/\/tenor\.com\/view\/.+"
 URL_REGEX = (
@@ -92,8 +93,10 @@ class ImageConverter(commands.Converter):
             return BytesIO(await user.avatar.read()), True
 
         if re.match(URL_REGEX, argument):
-            if result := await parse_url(argument, ctx.bot.session):
-                return result, True
+            parsed_url = urlparse(argument)
+            if str(parsed_url.netloc) not in ("127.0.0.1", "localhost", "0.0.0.0"):
+                if result := await parse_url(argument, ctx.bot.session):
+                    return result, True
 
         try:
             emoji_ = await commands.PartialEmojiConverter().convert(ctx, argument)
