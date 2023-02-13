@@ -20,7 +20,6 @@ class MessageEditHandler(commands.Cog):
     ) -> None:
         if (
             before.content == after.content
-            or after.id not in self.bot.command_cache.keys()
         ):
             return
 
