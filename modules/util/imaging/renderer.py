@@ -239,7 +239,7 @@ class Renders:
 
                     durations.append(frame.info.get("duration", 5))
                     if frame.size != size:
-                        frame = frame.resize(size, Image.ANTIALIAS)
+                        frame = frame.resize(size, resample=Image.LANCZOS)
                     with Image.new(
                         "RGBA", full_img_size, (255, 255, 255, 0)
                     ) as full_img:
