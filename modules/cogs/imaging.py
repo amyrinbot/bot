@@ -84,7 +84,7 @@ class Imaging(commands.Cog):
             dimensions = f"{img.width}x{img.height}"
             colorspace = img.colorspace
 
-            dominant_colors = await processor.get_dominant_colors()
+            dominant_colors = (await processor.get_dominant_colors())[:6]
             dominant_colors_image = await processor.draw_dominant_colors(
                 dominant_colors
             )
