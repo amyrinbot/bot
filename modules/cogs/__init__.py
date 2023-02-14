@@ -50,7 +50,6 @@ def command(
     description="Command undocumented.",
     **kwargs
 ):
-
     cooldown_after_parsing = kwargs.pop("cooldown_after_parsing", True)
 
     perms = {"bot": permissions.bot, "user": permissions.user}

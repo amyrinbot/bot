@@ -23,7 +23,6 @@ class DocSelectOption(discord.SelectOption):
 
 class DocSelect(discord.ui.Select):
     def __init__(self, parent: View, results: SearchResults):
-
         self._parent = parent
         self.texts = {}
 

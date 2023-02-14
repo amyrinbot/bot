@@ -26,6 +26,7 @@ from playwright.async_api._generated import Browser
 
 import config
 from modules.context import Context
+from modules.util.converters import ascii_list
 from modules.util.documentation.parser import DocParser
 from modules.util.handlers.nginx import NginxHandler
 
@@ -227,7 +228,7 @@ class amyrin(commands.Bot):
         async def callback(cog, *args, **kwargs):
             if isinstance(cog, commands.Context):
                 ctx = cog
-            else: 
+            else:
                 ctx = args[0]
             command: commands.Command = ctx.command
             cb = command._original_callback
@@ -239,11 +240,7 @@ class amyrin(commands.Bot):
             ctx._task_name = name
 
             def done_callback(result: asyncio.Future):
-                try:
-                    if not result.exception():
-                        self.command_tasks.pop(name, None)
-                except asyncio.CancelledError:
-                    self.command_tasks.pop(name, None)
+                self.command_tasks.pop(name, None)
 
             task.add_done_callback(done_callback)
             return await task
@@ -267,12 +264,10 @@ class amyrin(commands.Bot):
 
         for name, data in info.items():
             self.logger.info(name)
-            for k, v in data.items():
-                if k == list(data.keys())[-1]:
-                    text = f"└─ {k}: {v}"
-                else:
-                    text = f"├─ {k}: {v}"
-                self.logger.info(indent(text, "  "))
+            texts = [f"{k}: {v}" for k, v in data.items()]
+            text = ascii_list(texts)
+            for txt in text:
+                self.logger.info(indent(txt, "  "))
 
         with open("restart.json", "r") as f:
             data = json.load(f)
@@ -379,6 +374,7 @@ bot = amyrin(
     strip_after_prefix=True,
     case_insensitive=True,
 )
+
 
 # stole from https://gist.github.com/AbstractUmbra/a9c188797ae194e592efe05fa129c57f
 @bot.command()

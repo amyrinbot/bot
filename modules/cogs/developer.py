@@ -27,6 +27,94 @@ from modules.views.pull import PullView
 from . import *
 
 
+def parse_code(code: str) -> ast.Module:
+    code = f"""async def func():
+    from importlib import import_module as {import_expression.constants.IMPORTER}
+{textwrap.indent(code, '    ')}"""
+
+    code: ast.Module = import_expression.parse(code)
+    ast.fix_missing_locations(code)
+    block: ast.AsyncFunctionDef = code.body[-1]
+    KeywordTransformer().generic_visit(block)
+
+    last = block.body[-1]
+
+    if not isinstance(last, ast.Expr):
+        return code
+
+    if not isinstance(last.value, ast.Yield):
+        assign = ast.Yield(last.value)
+        ast.copy_location(assign, last)
+        _yield = ast.Expr(assign)
+        ast.copy_location(_yield, last)
+        block.body[-1] = _yield
+
+    return code
+
+
+async def evaluate_code(ctx: commands.Context, env: dict, code: str):
+    try:
+        res = parse_code(code)
+        code = compile(res, filename="<eval>", mode="exec")
+    except Exception as exc:
+        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+        result = f"```py\n{tb}```"
+        return await ctx.send(result)
+
+    """ Evaluating """
+    result = None
+    async with Updater(ctx):
+        try:
+            exec(code, env)
+            func = env.get("func")
+            if inspect.isasyncgenfunction(func):
+                return func
+            else:
+                await func()
+        except Exception as exc:
+            result = "".join(
+                traceback.format_exception(type(exc), exc, exc.__traceback__)
+            )
+
+        if result is not None and len(str(result.strip())) > 0:
+            return result
+
+
+async def handle_async_generator(ctx: commands.Context, func: AsyncGenerator):
+    async for i in func():
+        if i is not None:
+            await send(ctx, i)
+
+
+async def send(ctx: commands.Context, result):
+    if isinstance(result, list):
+        if all(isinstance(i, discord.Embed) for i in result):
+            return await ctx.send(embeds=result)
+        if all(isinstance(i, discord.Attachment) for i in result):
+            return await ctx.send(files=[await i.to_file() for i in result])
+        if all(isinstance(i, discord.File) for i in result):
+            return await ctx.send(
+                files=result,
+            )
+        return await ctx.send(str(result))
+    if isinstance(result, discord.Embed):
+        return await ctx.send(embed=result)
+    if isinstance(result, discord.Attachment):
+        return await ctx.send(file=await result.to_file())
+    if isinstance(result, discord.File):
+        return await ctx.send(file=result)
+    if isinstance(result, str):
+        if len(result.splitlines()) > 1:
+            return await ctx.send(f"```py\n{str(result).replace('``', '`​`')}```")
+        return await ctx.send(result)
+    if isinstance(result, discord.ui.View):
+        return await ctx.send(view=result)
+    if result is None:
+        return
+
+    return await ctx.send(str(result))
+
+
 class Developer(commands.Cog, command_attrs={"hidden": True}):
     def __init__(self, bot):
         super().__init__()
@@ -44,58 +132,6 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
             await proc.wait()
         return tuple(i.decode() for i in await proc.communicate())
 
-    def parse_code(self, code: str) -> ast.Module:
-        code = f"""async def func():
-    from importlib import import_module as {import_expression.constants.IMPORTER}
-{textwrap.indent(code, '    ')}"""
-
-        code: ast.Module = import_expression.parse(code)
-        ast.fix_missing_locations(code)
-        block: ast.AsyncFunctionDef = code.body[-1]
-        KeywordTransformer().generic_visit(block)
-
-        last = block.body[-1]
-
-        if not isinstance(last, ast.Expr):
-            return code
-
-        if not isinstance(last.value, ast.Yield):
-            assign = ast.Yield(last.value)
-            ast.copy_location(assign, last)
-            _yield = ast.Expr(assign)
-            ast.copy_location(_yield, last)
-            block.body[-1] = _yield
-
-        return code
-
-    async def send(self, ctx: commands.Context, result):
-        if isinstance(result, list):
-            if all(isinstance(i, discord.Embed) for i in result):
-                return await ctx.send(embeds=result)
-            if all(isinstance(i, discord.Attachment) for i in result):
-                return await ctx.send(files=[await i.to_file() for i in result])
-            if all(isinstance(i, discord.File) for i in result):
-                return await ctx.send(
-                    files=result,
-                )
-            return await ctx.send(str(result))
-        if isinstance(result, discord.Embed):
-            return await ctx.send(embed=result)
-        if isinstance(result, discord.Attachment):
-            return await ctx.send(file=await result.to_file())
-        if isinstance(result, discord.File):
-            return await ctx.send(file=result)
-        if isinstance(result, str):
-            if len(result.splitlines()) > 1:
-                return await ctx.send(f"```py\n{str(result).replace('``', '`​`')}```")
-            return await ctx.send(result)
-        if isinstance(result, discord.ui.View):
-            return await ctx.send(view=result)
-        if result is None:
-            return
-
-        return await ctx.send(str(result))
-
     @command(
         commands.group,
         name="eval",
@@ -107,11 +143,6 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
     async def _eval(self, ctx, *, code: codeblock_converter):
         context = ctx
         ctx = await self.bot.get_context(ctx.message, cls=commands.Context)
-
-        async def handle_async_generator(func: AsyncGenerator):
-            async for i in func():
-                if i is not None:
-                    await self.send(ctx, i)
 
         code = code.content
 
@@ -144,31 +175,13 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
 
         """ Code Parsing """
 
-        try:
-            res = self.parse_code(code)
-            code = compile(res, filename="<eval>", mode="exec")
-        except Exception as exc:
-            tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-            result = f"```py\n{tb}```"
-            return await ctx.send(result)
+        result = await evaluate_code(ctx, env, code)
 
-        """ Evaluating """
-        result = None
-        async with Updater(ctx):
-            try:
-                exec(code, env)
-                func = env.get("func")
-                if inspect.isasyncgenfunction(func):
-                    await handle_async_generator(func)
-                else:
-                    await func()
-            except Exception as exc:
-                result = "".join(
-                    traceback.format_exception(type(exc), exc, exc.__traceback__)
-                )
+        if inspect.isasyncgenfunction(result):
+            return await handle_async_generator(ctx, result)
 
-        if result is not None and len(str(result.strip())) > 0:
-            await self.send(ctx, result)
+        if result is not None:
+            await send(ctx, result)
 
     @command(
         commands.command,

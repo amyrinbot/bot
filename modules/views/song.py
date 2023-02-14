@@ -13,7 +13,6 @@ from .base import View
 
 class SongSelect(discord.ui.Select):
     def __init__(self, parent: View, results: List[SearchResult]):
-
         self._parent = parent
         self.texts = {}
 

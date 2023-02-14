@@ -2,7 +2,7 @@ import inspect
 import os
 import re
 from io import BufferedIOBase, BytesIO
-from typing import Any
+from typing import Any, List
 from urllib.parse import urlparse
 
 import aiohttp
@@ -22,6 +22,18 @@ def format_list(items: list, seperator: str = "or", brackets: str = ""):
 
     msg = ", ".join(list(new_items)[:-1]) + f" {seperator} " + list(new_items)[-1]
     return msg
+
+
+def ascii_list(items: List[str]) -> List[str]:
+    texts = []
+    for item in items:
+        if item == items[-1]:
+            text = f"└─ {item}"
+        else:
+            text = f"├─ {item}"
+        texts.append(text)
+
+    return texts
 
 
 URL_REGEX = re.compile(

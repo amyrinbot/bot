@@ -5,3 +5,4 @@ rtfs_repos/
 logs/
 *.pyc
 discord.log
+rust/

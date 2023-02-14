@@ -18,9 +18,7 @@ class MessageEditHandler(commands.Cog):
     async def reprocess_on_edit(
         self, before: discord.Message, after: discord.Message
     ) -> None:
-        if (
-            before.content == after.content
-        ):
+        if before.content == after.content:
             return
 
         await self.bot.process_commands(after)

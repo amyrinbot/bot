@@ -698,7 +698,6 @@ class DocScraper:
             await self.strgcls._rtfm_caching_task
 
         if self.strgcls._rtfm_caching_task.exception() and self.strgcls._inv is None:
-
             raise FailedCachingTask(
                 "rtfm",
                 self.strgcls._rtfm_caching_task.exception(),

@@ -229,6 +229,7 @@ class Downloader:
                         imagedata = await resp.read()
 
                         processor = SequentialImageProcessor(imagedata)
+                        await processor._init()
                         await processor.resize_keep_ratio((300, 300))
                         await processor.crop_to_center()
                         img = await processor.save()

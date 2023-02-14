@@ -47,8 +47,8 @@ class Context(commands.Context):
         self.command = command
         return await command(*args, **kwargs)
 
-    async def send(self, content: str = None, *args, **kwargs):
-        if self.message.id in self.bot.command_cache.keys():
+    async def send(self, content: str = None, edit: bool = True, *args, **kwargs):
+        if edit and self.message.id in self.bot.command_cache.keys():
             entries = self.bot.command_cache[self.message.id]
             if len(entries) > 1:
                 for message in entries[:-1]:
@@ -78,7 +78,9 @@ class Context(commands.Context):
                 buf.write(content)
                 buf.seek(0)
                 file = discord.File(buf, filename="message.txt")
-                if "file" not in [param.name for param in inspect.signature(func).parameters.values()]:
+                if "file" not in [
+                    param.name for param in inspect.signature(func).parameters.values()
+                ]:
                     kwargs["attachments"] = [file]
                 else:
                     kwargs["file"] = file
@@ -91,10 +93,11 @@ class Context(commands.Context):
 
         msg = await func(content=content, *args, **kwargs)
 
-        if not self.bot.command_cache.get(self.message.id):
-            self.bot.command_cache[self.message.id] = []
+        if edit:
+            if not self.bot.command_cache.get(self.message.id):
+                self.bot.command_cache[self.message.id] = []
 
-        self.bot.command_cache[self.message.id].append(msg)
+            self.bot.command_cache[self.message.id].append(msg)
 
         return msg
 
@@ -117,7 +120,6 @@ class Context(commands.Context):
         *args,
         **kwargs,
     ) -> discord.Message:
-
         file = self.string_to_file(content, filename=filename)
 
         return await super().send(
