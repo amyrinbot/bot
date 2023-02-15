@@ -155,7 +155,7 @@ class DocScraper:
 
         self._rtfs_repo = (
             "discord.py",
-            "https://dpy.gh.amyr.in",
+            "https://github.com/Rapptz/discord.py",
             "discord",
         )
 
