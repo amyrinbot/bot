@@ -64,7 +64,8 @@ class ImageConverter(commands.Converter):
         fallback: bool = True,
         allow_emojis: bool = True,
     ) -> str:
-        argument = argument.strip()
+        if argument:
+            argument = argument.strip()
         message = ctx.message
 
         used = False
