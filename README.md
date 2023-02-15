@@ -1,3 +1,3 @@
 # bot
 
-must respect the [license](https://github.com/amyrinbot/web/blob/main/LICENSE)!!!
+must respect the [license](https://github.com/amyrinbot/bot/blob/main/LICENSE)!!!
