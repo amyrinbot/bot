@@ -35,7 +35,7 @@ class Meta(commands.Cog):
         BRANCH = "main"
 
         if command is None:
-            return await ctx.send(URL)
+            return await ctx.send(URL + "\nrespect the license or i will cry")
 
         if command == "help":
             src = type(self.bot.help_command)
@@ -56,7 +56,7 @@ class Meta(commands.Cog):
         location = os.path.relpath(filename).replace("\\", "/")
 
         source_url = f"<{URL}/blob/{BRANCH}/{location}/#L{start}-L{end}>"
-        await ctx.send(source_url)
+        await ctx.send(source_url + "\nrespect the license or i will cry")
 
     @command(description="Get my ping", aliases=["latency"], examples=["{prefix}ping"])
     async def ping(self, ctx: commands.Context | discord.Interaction):
