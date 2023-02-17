@@ -1,6 +1,5 @@
 import ast
 import asyncio
-from copy import copy
 import importlib
 import inspect
 import json
@@ -10,6 +9,7 @@ import os
 import random
 import string
 import traceback
+from copy import copy
 from datetime import datetime
 from textwrap import indent
 from types import ModuleType
@@ -19,8 +19,10 @@ import aiohttp
 import discord
 import humanfriendly
 import mystbin
+from discord.abc import Snowflake
 from discord.ext import commands, ipc, tasks
 from discord.ext.commands import Greedy
+from discord.http import MultipartParameters
 from expiringdict import ExpiringDict
 from playwright.async_api import async_playwright
 from playwright.async_api._generated import Browser
@@ -31,8 +33,7 @@ from modules.util.converters import ascii_list
 from modules.util.database.manager import DatabaseManager
 from modules.util.documentation.parser import DocParser
 from modules.util.handlers.nginx import NginxHandler
-from discord.http import MultipartParameters
-from discord.abc import Snowflake
+
 
 def _censor_variables(text: str) -> str:
     for item in config.censored:
@@ -43,16 +44,18 @@ def _censor_variables(text: str) -> str:
         text = text.replace(str(value), "[omitted]")
     return text
 
+
 def _init_secure_send_message(func: Callable):
-    async def secure_send_message(channel_id: Snowflake, *, params: MultipartParameters):
-        payload = eval(
-            _censor_variables(str(params.payload))
-        )
+    async def secure_send_message(
+        channel_id: Snowflake, *, params: MultipartParameters
+    ):
+        payload = eval(_censor_variables(str(params.payload)))
         new_params = MultipartParameters(payload, params.multipart, params.files)
 
         return await func(channel_id, params=new_params)
-    
+
     return secure_send_message
+
 
 class amyrin(commands.Bot):
     def __init__(self, *args, **kwargs) -> commands.Bot:

@@ -80,7 +80,9 @@ async def evaluate_code(ctx: commands.Context, env: dict, code: str):
             return result
 
 
-async def handle_async_generator(ctx: commands.Context, func: AsyncGenerator, *args, **kwargs):
+async def handle_async_generator(
+    ctx: commands.Context, func: AsyncGenerator, *args, **kwargs
+):
     async for i in func():
         if i is not None:
             await send(ctx, i, *args, **kwargs)
@@ -91,12 +93,11 @@ async def send(ctx: commands.Context, result, *args, **kwargs):
         if all(isinstance(i, discord.Embed) for i in result):
             return await ctx.send(embeds=result, *args, **kwargs)
         if all(isinstance(i, discord.Attachment) for i in result):
-            return await ctx.send(files=[await i.to_file() for i in result], *args, **kwargs)
-        if all(isinstance(i, discord.File) for i in result):
             return await ctx.send(
-                files=result,
-                *args, **kwargs
+                files=[await i.to_file() for i in result], *args, **kwargs
             )
+        if all(isinstance(i, discord.File) for i in result):
+            return await ctx.send(files=result, *args, **kwargs)
         return await ctx.send(str(result), *args, **kwargs)
     if isinstance(result, discord.Embed):
         return await ctx.send(embed=result, *args, **kwargs)
@@ -106,7 +107,9 @@ async def send(ctx: commands.Context, result, *args, **kwargs):
         return await ctx.send(file=result, *args, **kwargs)
     if isinstance(result, str):
         if len(result.splitlines()) > 1:
-            return await ctx.send(f"```py\n{str(result).replace('``', '`​`')}```", *args, **kwargs)
+            return await ctx.send(
+                f"```py\n{str(result).replace('``', '`​`')}```", *args, **kwargs
+            )
         return await ctx.send(result, *args, **kwargs)
     if isinstance(result, discord.ui.View):
         return await ctx.send(view=result, *args, **kwargs)

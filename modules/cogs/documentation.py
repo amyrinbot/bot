@@ -8,7 +8,8 @@ from discord.ext import commands
 
 from core.bot import amyrin
 from modules.util.converters import format_list
-from modules.util.scraping.documentation.discord_py import DocScraper as DiscordScraper
+from modules.util.scraping.documentation.discord_py import \
+    DocScraper as DiscordScraper
 from modules.views.docs import DocView
 
 from . import *

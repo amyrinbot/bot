@@ -6,24 +6,13 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import Callable, List, Literal, Union
 
-from imagetext_py import (
-    EmojiOptions,
-    FontDB,
-    Paint,
-    TextAlign,
-    WrapStyle,
-    Writer,
-    text_size_multiline,
-    text_wrap,
-)
+from imagetext_py import (EmojiOptions, FontDB, Paint, TextAlign, WrapStyle,
+                          Writer, text_size_multiline, text_wrap)
 from PIL import Image, ImageSequence
 
 from modules.util.executor import run_blocking_func
-from modules.util.imaging.exceptions import (
-    CharacterLimitExceeded,
-    InvalidTemplate,
-    TooManyFrames,
-)
+from modules.util.imaging.exceptions import (CharacterLimitExceeded,
+                                             InvalidTemplate, TooManyFrames)
 from modules.util.imaging.utils import SequentialImageProcessor
 from modules.util.media.base import execute
 from modules.util.timer import Timer

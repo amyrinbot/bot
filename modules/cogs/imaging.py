@@ -9,11 +9,8 @@ from discord.ext import commands
 from core.bot import amyrin
 from modules.util.converters import ascii_list
 from modules.util.imaging.converter import ImageConverter
-from modules.util.imaging.exceptions import (
-    CharacterLimitExceeded,
-    InvalidTemplate,
-    TooManyFrames,
-)
+from modules.util.imaging.exceptions import (CharacterLimitExceeded,
+                                             InvalidTemplate, TooManyFrames)
 from modules.util.imaging.renderer import Renders, render
 from modules.util.imaging.utils import SequentialImageProcessor
 

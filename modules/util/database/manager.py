@@ -1,25 +1,21 @@
 import asyncio
-from datetime import datetime
 import functools
 import os
 import random
 import string
 import traceback
-import asyncpg
-
-from asyncpg import Pool, Record
-import discord
-from discord.ext import tasks
+from datetime import datetime
 from typing import Callable, List, Self, Union
-from discord.ext import commands
 
-from modules.util.database.exceptions import (
-    AlreadyFollowingError,
-    ErrorAlreadyFixed,
-    ErrorNotFound,
-    MaximumErrorFollowersReached,
-    NotFollowingError,
-)
+import asyncpg
+import discord
+from asyncpg import Pool, Record
+from discord.ext import commands, tasks
+
+from modules.util.database.exceptions import (AlreadyFollowingError,
+                                              ErrorAlreadyFixed, ErrorNotFound,
+                                              MaximumErrorFollowersReached,
+                                              NotFollowingError)
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -31,11 +27,7 @@ class DatabaseManager:
 
         self._pool: Pool = None
         self._caching_task: asyncio.Task
-        self._cache: dict = {
-            "guilds": {},
-            "blacklist": {},
-            "errors": {}
-        }
+        self._cache: dict = {"guilds": {}, "blacklist": {}, "errors": {}}
 
     async def wait_until_cached(self) -> None:
         while not self._cached:
@@ -64,12 +56,14 @@ class DatabaseManager:
     async def add_new_guilds(self) -> None:
         await self.bot.wait_until_ready()
 
-        query = map(lambda x: x["guild_id"], await self._pool.fetch("SELECT guild_id FROM guilds"))
+        query = map(
+            lambda x: x["guild_id"],
+            await self._pool.fetch("SELECT guild_id FROM guilds"),
+        )
 
         for guild in self.bot.guilds:
             if guild.id not in query:
                 await self.add_guild(guild)
-
 
     async def _auto_cache(self) -> None:
         for table in self._cache.keys():
@@ -121,10 +115,10 @@ class DatabaseManager:
     async def get_disabled_commands(self, guild: discord.Guild):
         if guild is None:
             return []
-        
+
         if guild.id in self._cache["guilds"]:
             return self._cache["guilds"][guild.id].get("disabled_commands")
-        
+
         result = await self._pool.fetchrow(
             "SELECT * FROM guilds WHERE guild_id = $1", guild.id
         )

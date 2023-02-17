@@ -21,15 +21,8 @@ from modules.util.imaging.utils import SequentialImageProcessor
 
 from .base import execute
 from .compressor import CompressionResult, Compressor
-from .exceptions import (
-    AgeLimited,
-    InvalidFormat,
-    LiveStream,
-    MediaException,
-    MissingNginxHandler,
-    NoPartsException,
-    TooLong,
-)
+from .exceptions import (AgeLimited, InvalidFormat, LiveStream, MediaException,
+                         MissingNginxHandler, NoPartsException, TooLong)
 
 
 @dataclass(frozen=True)

@@ -13,6 +13,7 @@ from modules.views.paginator import paginate
 
 from . import *
 
+
 class Errors(commands.Cog):
     def __init__(self, bot):
         super().__init__()
@@ -34,7 +35,7 @@ class Errors(commands.Cog):
         commands.hybrid_group,
         description="Get information on an error",
         examples=["{prefix}error 51"],
-        invoke_without_command=True
+        invoke_without_command=True,
     )
     @commands.is_owner()
     async def error(self, ctx: commands.Context, code: int):
@@ -82,7 +83,7 @@ class Errors(commands.Cog):
         name="fix",
         description="Mark an error as fixed.",
         examples=["{prefix}error fix 51"],
-        hidden=True
+        hidden=True,
     )
     @commands.is_owner()
     async def error_fix(self, ctx, code: int, *, note: str = None):
@@ -93,7 +94,14 @@ class Errors(commands.Cog):
 
         await ctx.message.add_reaction(CHECKMARK)
 
-    @command(error.command, name="massfix", description="Mark errors as fixed.", examples=["{prefix}error massunfix 51 55 6"], aliases=["mf"], hidden=True)
+    @command(
+        error.command,
+        name="massfix",
+        description="Mark errors as fixed.",
+        examples=["{prefix}error massunfix 51 55 6"],
+        aliases=["mf"],
+        hidden=True,
+    )
     @commands.is_owner()
     async def error_massfix(self, ctx, *, codes: str):
         split_codes = codes.split()
@@ -134,7 +142,13 @@ class Errors(commands.Cog):
         )
         await ctx.send(embed=em)
 
-    @command(error.command, name="unfix", description="Revert marking an error as fixed.", examples=["{prefix}error unfix 51"], hidden=True)
+    @command(
+        error.command,
+        name="unfix",
+        description="Revert marking an error as fixed.",
+        examples=["{prefix}error unfix 51"],
+        hidden=True,
+    )
     @commands.is_owner()
     async def error_unfix(self, ctx, code: int, *, note: str):
         query = await self.bot.db.unfix_error(code, note=note)
@@ -144,7 +158,14 @@ class Errors(commands.Cog):
 
         await ctx.message.add_reaction(CHECKMARK)
 
-    @command(error.command, name="massunfix", examples=["{prefix}error massunfix 51 55 6"], description="Revert marking an error as fixed.\nCodes are seperated by `,`", aliases=["muf"], hidden=True)
+    @command(
+        error.command,
+        name="massunfix",
+        examples=["{prefix}error massunfix 51 55 6"],
+        description="Revert marking an error as fixed.\nCodes are seperated by `,`",
+        aliases=["muf"],
+        hidden=True,
+    )
     @commands.is_owner()
     async def error_massunfix(self, ctx, codes: str):
         codes = [int(code.strip()) for code in codes.split(",")]
@@ -167,24 +188,26 @@ class Errors(commands.Cog):
         )
         await ctx.send(embed=em)
 
-    @command(error.command, name="status", examples=["{prefix}error status 51"], description="Check the status of an error")
+    @command(
+        error.command,
+        name="status",
+        examples=["{prefix}error status 51"],
+        description="Check the status of an error",
+    )
     async def error_status(self, ctx: commands.Context, code: int):
         error = await self.bot.db.get_error(code)
 
-        await ctx.send(
-            f"Error {code} is {'not ' if not error['fixed'] else ''}fixed"
-        )
+        await ctx.send(f"Error {code} is {'not ' if not error['fixed'] else ''}fixed")
 
     @command(
         error.command,
         examples=["{prefix}error follow 51"],
-        name="follow", description="Track an error to get notified if it gets fixed"
+        name="follow",
+        description="Track an error to get notified if it gets fixed",
     )
     async def error_follow(self, ctx: commands.Context, code: int):
         await self.bot.db.follow_error(code, ctx.author)
-        await ctx.send(
-            f"You are now following error {code}", ephemeral=True
-        )
+        await ctx.send(f"You are now following error {code}", ephemeral=True)
 
     @command(
         error.command,
@@ -194,9 +217,7 @@ class Errors(commands.Cog):
     )
     async def error_unfollow(self, ctx: commands.Context, code: int):
         await self.bot.db.unfollow_error(code, ctx.author)
-        await ctx.send(
-            f"You are no longer following error {code}", ephemeral=True
-        )
+        await ctx.send(f"You are no longer following error {code}", ephemeral=True)
 
     @command(examples=["{prefix}errors"], description="List all errors")
     async def errors(self, ctx: commands.Context):
