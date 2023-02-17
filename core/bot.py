@@ -1,5 +1,6 @@
 import ast
 import asyncio
+from copy import copy
 import importlib
 import inspect
 import json
@@ -27,13 +28,38 @@ from playwright.async_api._generated import Browser
 import config
 from modules.context import Context
 from modules.util.converters import ascii_list
+from modules.util.database.manager import DatabaseManager
 from modules.util.documentation.parser import DocParser
 from modules.util.handlers.nginx import NginxHandler
+from discord.http import MultipartParameters
+from discord.abc import Snowflake
 
+def _censor_variables(text: str) -> str:
+    for item in config.censored:
+        parts = item.split(".")
+        value = config
+        for part in parts:
+            value = getattr(value, part)
+        text = text.replace(str(value), "[omitted]")
+    return text
+
+def _init_secure_send_message(func: Callable):
+    async def secure_send_message(channel_id: Snowflake, *, params: MultipartParameters):
+        payload = eval(
+            _censor_variables(str(params.payload))
+        )
+        new_params = MultipartParameters(payload, params.multipart, params.files)
+
+        return await func(channel_id, params=new_params)
+    
+    return secure_send_message
 
 class amyrin(commands.Bot):
     def __init__(self, *args, **kwargs) -> commands.Bot:
         super().__init__(command_prefix=self._get_prefix(), *args, **kwargs)
+        _original_sm = self.http.send_message
+        self.http.send_message = _init_secure_send_message(_original_sm)
+
         self.uptime = datetime.utcnow()
         self.myst = mystbin.Client(token=config.MYSTBIN_API)
 
@@ -54,12 +80,13 @@ class amyrin(commands.Bot):
         self.docparser: DocParser = None  # DocParser instance, later defined in modules.util.documentation.parser
 
         self.ipc = ipc.Server(self, host="0.0.0.0", secret_key=config.IPC_SECRET_KEY)
+        self.db: DatabaseManager
 
         self.color = (
             0x2F3136  # color used for embeds and whereever else it would be appropiate
         )
 
-        self.nginx = NginxHandler(url=config.Nginx.url, path=config.Nginx.path)
+        self.nginx = NginxHandler(url=config.nginx.url, path=config.nginx.path)
 
         self.command_tasks: Dict[str, dict] = {}
         self.command_cache: Dict[int, List[discord.Message]] = ExpiringDict(
@@ -94,8 +121,8 @@ class amyrin(commands.Bot):
 
         async def get_prefix(bot: commands.Bot, message: discord.Message = None) -> str:
             if debug:
-                return "amyd"
-            prefixes = ["amyr"]
+                return "amyd "
+            prefixes = ["amyr "]
             return commands.when_mentioned_or(*prefixes)(bot, message)
 
         return get_prefix
@@ -196,6 +223,16 @@ class amyrin(commands.Bot):
         discord.utils.setup_logging()
         self.pfp_rotation.start()
 
+        _db = config.database
+        self.db = await DatabaseManager.start(
+            self,
+            "amyr " if not self.debug else "amyd ",
+            database=_db.name,
+            host=_db.host,
+            port=_db.port,
+            user=_db.user,
+            password=_db.password,
+        )
         self.session = aiohttp.ClientSession()
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch()
@@ -297,7 +334,13 @@ class amyrin(commands.Bot):
             f.close()
 
     async def close(self, updater: Callable = None) -> None:
-        tasks = {"bot": super().close, "session": self.session.close}
+        tasks = {
+            "bot": getattr(super(), "close", None),
+            "session": getattr(self.session, "close", None),
+        }
+
+        if any(func is None for func in tasks.values()):
+            return
 
         async def log(message: str, attr: str = None):
             if updater:
@@ -371,7 +414,6 @@ intents = discord.Intents.all()
 bot = amyrin(
     allowed_mentions=discord.AllowedMentions.none(),
     intents=intents,
-    strip_after_prefix=True,
     case_insensitive=True,
 )
 

@@ -80,39 +80,40 @@ async def evaluate_code(ctx: commands.Context, env: dict, code: str):
             return result
 
 
-async def handle_async_generator(ctx: commands.Context, func: AsyncGenerator):
+async def handle_async_generator(ctx: commands.Context, func: AsyncGenerator, *args, **kwargs):
     async for i in func():
         if i is not None:
-            await send(ctx, i)
+            await send(ctx, i, *args, **kwargs)
 
 
-async def send(ctx: commands.Context, result):
+async def send(ctx: commands.Context, result, *args, **kwargs):
     if isinstance(result, list):
         if all(isinstance(i, discord.Embed) for i in result):
-            return await ctx.send(embeds=result)
+            return await ctx.send(embeds=result, *args, **kwargs)
         if all(isinstance(i, discord.Attachment) for i in result):
-            return await ctx.send(files=[await i.to_file() for i in result])
+            return await ctx.send(files=[await i.to_file() for i in result], *args, **kwargs)
         if all(isinstance(i, discord.File) for i in result):
             return await ctx.send(
                 files=result,
+                *args, **kwargs
             )
-        return await ctx.send(str(result))
+        return await ctx.send(str(result), *args, **kwargs)
     if isinstance(result, discord.Embed):
-        return await ctx.send(embed=result)
+        return await ctx.send(embed=result, *args, **kwargs)
     if isinstance(result, discord.Attachment):
-        return await ctx.send(file=await result.to_file())
+        return await ctx.send(file=await result.to_file(), *args, **kwargs)
     if isinstance(result, discord.File):
-        return await ctx.send(file=result)
+        return await ctx.send(file=result, *args, **kwargs)
     if isinstance(result, str):
         if len(result.splitlines()) > 1:
-            return await ctx.send(f"```py\n{str(result).replace('``', '`​`')}```")
-        return await ctx.send(result)
+            return await ctx.send(f"```py\n{str(result).replace('``', '`​`')}```", *args, **kwargs)
+        return await ctx.send(result, *args, **kwargs)
     if isinstance(result, discord.ui.View):
-        return await ctx.send(view=result)
+        return await ctx.send(view=result, *args, **kwargs)
     if result is None:
         return
 
-    return await ctx.send(str(result))
+    return await ctx.send(str(result), *args, **kwargs)
 
 
 class Developer(commands.Cog, command_attrs={"hidden": True}):
@@ -141,9 +142,6 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
         invoke_without_command=True,
     )
     async def _eval(self, ctx, *, code: codeblock_converter):
-        context = ctx
-        ctx = await self.bot.get_context(ctx.message, cls=commands.Context)
-
         code = code.content
 
         # omg console.log in python 😱😰😰
@@ -160,7 +158,7 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
             "bot": self.bot,
             "channel": ctx.message.channel,
             "find": discord.utils.find,
-            "ctx": context,
+            "ctx": ctx,
             "get": discord.utils.get,
             "guild": ctx.message.guild,
             "message": ctx.message,
@@ -178,10 +176,10 @@ class Developer(commands.Cog, command_attrs={"hidden": True}):
         result = await evaluate_code(ctx, env, code)
 
         if inspect.isasyncgenfunction(result):
-            return await handle_async_generator(ctx, result)
+            return await handle_async_generator(ctx, result, edit=False)
 
         if result is not None:
-            await send(ctx, result)
+            await send(ctx, result, edit=False)
 
     @command(
         commands.command,

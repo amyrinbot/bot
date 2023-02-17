@@ -1,18 +1,17 @@
 # credits to https://gist.github.com/EvieePy/7822af90858ef65012ea500bcecf1612
 
 import random
-import sys
 import traceback
 
 import discord
 import humanfriendly
 from discord import app_commands
 from discord.ext import commands
-
+from core.bot import amyrin
 
 class CommandErrorHandler(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: amyrin = bot
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, error):
@@ -135,12 +134,8 @@ class CommandErrorHandler(commands.Cog):
                 formatted_error = "".join(formatted_error)
                 return await ctx.send(f"```py\n{formatted_error}\n```")
 
-            print(
-                "Ignoring exception in command {}:".format(ctx.command), file=sys.stderr
-            )
-            traceback.print_exception(
-                type(error), error, error.__traceback__, file=sys.stderr
-            )
+            result = await self.bot.db.add_error(ctx, error)
+            await ctx.reply(result)
 
 
 async def setup(bot):

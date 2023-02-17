@@ -156,6 +156,7 @@ class DocScraper:
         self._rtfs_repo = (
             "discord.py",
             "https://github.com/Rapptz/discord.py",
+            "https://dpy.gh.amyr.in",
             "discord",
         )
 
@@ -232,7 +233,7 @@ class DocScraper:
         return stdout.decode(), stderr.decode()
 
     def _rtfs_index_file(self, filepath: os.PathLike) -> None:
-        repo, _, _ = self._rtfs_repo
+        repo, _, _, _ = self._rtfs_repo
 
         def append_item(name: str, file: os.PathLike, position: set[int, int]):
             repos_path = os.path.join(os.getcwd(), "rtfs_repos")
@@ -299,14 +300,16 @@ class DocScraper:
         if recache:
             self.strgcls._rtfs_cache = {}
 
-        repo, url, dir_name = self._rtfs_repo
+        repo, url, _, dir_name = self._rtfs_repo
 
         rtfs_repos = os.path.join(os.getcwd(), "rtfs_repos")
         rtfs_repo = os.path.join(rtfs_repos, repo)
         path = os.path.join(rtfs_repo, dir_name)
 
         if not os.path.isdir(path):
-            await self._shell(f"git clone {url} {rtfs_repo}")
+            code = f"git clone {url} {rtfs_repo}"
+            print(code)
+            await self._shell(code)
 
         commit_path = os.path.join(rtfs_repo, ".git/refs/heads/master")
 
@@ -329,7 +332,7 @@ class DocScraper:
 
         results = []
 
-        _, repo_url, repo_path = self._rtfs_repo
+        _, _, repo_url, repo_path = self._rtfs_repo
 
         for item in self.strgcls._rtfs_cache:
             name = item.get("name")
@@ -382,6 +385,8 @@ class DocScraper:
             text = template.format(tag_name, tag_href)
         elif isinstance(element, Tag) and element.name == "strong":
             text = f"**{element.text}**"
+        elif isinstance(element, Tag) and element.name == "code":
+            text = f"`{element.text}`"
         else:
             text = element.text
 
@@ -488,8 +493,10 @@ class DocScraper:
         ):
             examples.append(child.find("pre").text)
 
-        if version_modified := documentation.find("span", class_="versionmodified"):
-            description.append(f"*{version_modified.text}*")
+        if version_modified := documentation.find("div", class_="versionchanged"):
+            if version_modified.parent:
+                text = self._get_text(version_modified.parent, parsed_url)
+                description.append(text)
 
         description = "\n\n".join(description).replace("Example:", "").strip()
 

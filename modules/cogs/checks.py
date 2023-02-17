@@ -31,6 +31,27 @@ class Checks(commands.Cog):
 
         return True
 
+    async def command_is_disabled(self, ctx: commands.Context):
+        disabled_commands = await self.bot.db.get_disabled_commands(ctx.guild)
+        if disabled_commands and ctx.command.qualified_name in disabled_commands:
+            await ctx.reply(
+                f"Sorry, but that command has been disabled by the server administrators."
+            )
+            return False
+        return True
+
+    async def is_blacklisted(self, ctx):
+        query = await self.bot.db.is_blacklisted(ctx.author)
+
+        if query is not None:
+            reason = query["reason"]
+            await ctx.reply(
+                f"Sorry, but you are blacklisted for reason `{reason}`, "
+                f"if you think this was a mistake, please contact my developer ({self.bot.owner})."
+            )
+            return False
+        return True
+
 
 async def setup(bot):
     await bot.add_cog(Checks(bot))

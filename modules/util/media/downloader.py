@@ -21,8 +21,15 @@ from modules.util.imaging.utils import SequentialImageProcessor
 
 from .base import execute
 from .compressor import CompressionResult, Compressor
-from .exceptions import (AgeLimited, InvalidFormat, LiveStream, MediaException,
-                         MissingNginxHandler, NoPartsException, TooLong)
+from .exceptions import (
+    AgeLimited,
+    InvalidFormat,
+    LiveStream,
+    MediaException,
+    MissingNginxHandler,
+    NoPartsException,
+    TooLong,
+)
 
 
 @dataclass(frozen=True)
@@ -152,7 +159,8 @@ class Downloader:
         return "".join(random.choices(string.ascii_letters, k=12))
 
     async def _extract_info(self) -> dict:
-        out = await execute(f'yt-dlp -j -q "{self._url}"')
+        out = await execute(f'yt-dlp -j "{self._url}"')
+        print(out)
         return json.loads(out)
 
     async def _check_validity(self, age_limit: int = 18) -> bool:

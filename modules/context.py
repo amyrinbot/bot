@@ -8,6 +8,7 @@ import discord
 from discord.context_managers import Typing
 from discord.ext import commands
 from discord.ext.commands.context import DeferTyping
+import config
 
 from modules.util.imaging.converter import ImageConverter
 
@@ -34,6 +35,7 @@ class Context(commands.Context):
 
     async def to_image(self, content: str = None):
         return await ImageConverter().convert(self, (content or self.message.content))
+
 
     def typing(self, *, ephemeral: bool = False) -> Union[Typing, DeferTyping]:
         if self.interaction is None:

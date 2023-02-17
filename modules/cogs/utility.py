@@ -9,8 +9,10 @@ from discord.ext import commands
 
 from core.bot import amyrin
 from modules.util.converters import FileConverter, URLObject
-from modules.util.handlers.nginx import (NginxHandlerExceededSizeLimit,
-                                         NginxHandlerException)
+from modules.util.handlers.nginx import (
+    NginxHandlerExceededSizeLimit,
+    NginxHandlerException,
+)
 from modules.util.updater import Updater
 from modules.views.paginator import WrapList, paginate
 from modules.views.song import SongView

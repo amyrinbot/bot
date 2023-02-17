@@ -10,15 +10,19 @@ import humanfriendly
 from discord.ext import commands
 
 from core.bot import amyrin
-from modules.util.converters import (FileConverter, URLConverter, URLObject,
-                                     format_list)
+from modules.util.converters import FileConverter, URLConverter, URLObject, format_list
 from modules.util.handlers.nginx import NginxHandlerExceededSizeLimit
 from modules.util.media.downloader import Downloader, FileDownload, URLDownload
-from modules.util.media.exceptions import (AgeLimited,
-                                           FailedCompressionException,
-                                           InvalidFormat, LiveStream,
-                                           MediaException, MissingNginxHandler,
-                                           TooLong, ValidityCheckFailed)
+from modules.util.media.exceptions import (
+    AgeLimited,
+    FailedCompressionException,
+    InvalidFormat,
+    LiveStream,
+    MediaException,
+    MissingNginxHandler,
+    TooLong,
+    ValidityCheckFailed,
+)
 
 from . import *
 from .flags import DownloadFlags

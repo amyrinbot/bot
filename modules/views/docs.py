@@ -7,8 +7,7 @@ from typing import List, Optional
 import discord
 from discord.ext import commands
 
-from modules.util.scraping.documentation.discord_py import (DocScraper,
-                                                            SearchResults)
+from modules.util.scraping.documentation.discord_py import DocScraper, SearchResults
 from modules.views.paginator import paginate
 
 from .base import View
