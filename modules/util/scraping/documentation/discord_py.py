@@ -372,25 +372,37 @@ class DocScraper:
     def _get_text(
         self, element: Tag, parsed_url: ParseResult, template: str = "[`{}`]({})"
     ):
-        if isinstance(element, Tag) and element.name == "a":
-            tag_name = element.text
-            tag_href = element["href"]
+        if not hasattr(element, "contents"):
+            element.contents = [element]
+        
+        text = []
+        for element in element.contents:
+            if element.name == "code":
+                text.append(f"`{element.text}`")
+                continue
+                
+            if isinstance(element, Tag):
+                
+                if element.name == "a":
+                    tag_name = element.text
+                    tag_href = element["href"]
 
-            if parsed_url:
-                parsed_href = urlparse(tag_href)
-                if not parsed_href.netloc:
-                    raw_url = parsed_url._replace(params="", fragment="").geturl()
-                    tag_href = urljoin(raw_url, tag_href)
+                    if parsed_url:
+                        parsed_href = urlparse(tag_href)
+                        if not parsed_href.netloc:
+                            raw_url = parsed_url._replace(params="", fragment="").geturl()
+                            tag_href = urljoin(raw_url, tag_href)
 
-            text = template.format(tag_name, tag_href)
-        elif isinstance(element, Tag) and element.name == "strong":
-            text = f"**{element.text}**"
-        elif isinstance(element, Tag) and element.name == "code":
-            text = f"`{element.text}`"
-        else:
-            text = element.text
+                    text.append(template.format(tag_name, tag_href))
+                    continue
+                
+                if element.name == "strong":
+                    text.append(f"**{element.text}**")
+                    continue
+                
+            text.append(element.text)
 
-        return text
+        return " ".join(text)
 
     @executor()
     def _get_documentation(self, element: Tag, page_url: str) -> Documentation:
@@ -430,6 +442,9 @@ class DocScraper:
 
         fields = {}
 
+        def strip_lines(text: str) -> str:
+            return re.sub(r"\n+", " ", text)
+
         if supported_operations := documentation.find(
             "div", class_="operations", recursive=False
         ):
@@ -440,14 +455,15 @@ class DocScraper:
                 operation = supported_operation.find(
                     "span", class_="descname"
                 ).text.strip()
+                text: Tag = supported_operation.find("dd", recursive=False)
                 desc = self._get_text(
-                    supported_operation.find("dd", recursive=False), parsed_url
+                    text, parsed_url
                 ).strip()
                 items.append((operation, desc))
 
             if items:
                 fields["Supported Operations"] = "\n".join(
-                    f"> {operation}\n{desc}" for operation, desc in items
+                    f"`{operation}` - {strip_lines(desc)}" for operation, desc in items
                 )
 
         field_list = documentation.find("dl", class_="field-list", recursive=False)
@@ -494,8 +510,8 @@ class DocScraper:
             examples.append(child.find("pre").text)
 
         if version_modified := documentation.find("div", class_="versionchanged"):
-            if version_modified.parent:
-                text = self._get_text(version_modified.parent, parsed_url)
+            for line in version_modified.findChildren("p", recursive=False):
+                text = strip_lines(self._get_text(line, parsed_url))
                 description.append(text)
 
         description = "\n\n".join(description).replace("Example:", "").strip()
