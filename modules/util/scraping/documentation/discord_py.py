@@ -375,29 +375,40 @@ class DocScraper:
         if not hasattr(element, "contents"):
             element.contents = [element]
         
+        def parse_element(elem: Tag, only: str | None = None):
+            def is_valid(elem, name):
+                if only is not None and elem.name == only and elem.name == name:
+                    return True
+                elif only is None and elem.name == name:
+                    return True
+                return False
+            
+            if is_valid(elem, "a"):
+                tag_name = elem.text
+                tag_href = elem["href"]
+
+                if parsed_url:
+                    parsed_href = urlparse(tag_href)
+                    if not parsed_href.netloc:
+                        raw_url = parsed_url._replace(params="", fragment="").geturl()
+                        tag_href = urljoin(raw_url, tag_href)
+
+                return template.format(tag_name, tag_href)
+            
+            if is_valid(elem, "strong"):
+                return f"**{elem.text}**"
+                
+            if is_valid(elem, "code"):
+                return f"`{elem.text}`"
+            
+        if isinstance(element, Tag) and (result := parse_element(element, "a")):
+            return result
+        
         text = []
         for element in element.contents:
             if isinstance(element, Tag):
-
-                if element.name == "a":
-                    tag_name = element.text
-                    tag_href = element["href"]
-
-                    if parsed_url:
-                        parsed_href = urlparse(tag_href)
-                        if not parsed_href.netloc:
-                            raw_url = parsed_url._replace(params="", fragment="").geturl()
-                            tag_href = urljoin(raw_url, tag_href)
-
-                    text.append(template.format(tag_name, tag_href))
-                    continue
-                
-                if element.name == "strong":
-                    text.append(f"**{element.text}**")
-                    continue
-                
-                if element.name == "code":
-                    text.append(f"`{element.text}`")
+                if result := parse_element(element):
+                    text.append(result)
                     continue
                 
             text.append(element.text)
