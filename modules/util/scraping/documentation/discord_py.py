@@ -377,12 +377,8 @@ class DocScraper:
         
         text = []
         for element in element.contents:
-            if element.name == "code":
-                text.append(f"`{element.text}`")
-                continue
-                
             if isinstance(element, Tag):
-                
+
                 if element.name == "a":
                     tag_name = element.text
                     tag_href = element["href"]
@@ -398,6 +394,10 @@ class DocScraper:
                 
                 if element.name == "strong":
                     text.append(f"**{element.text}**")
+                    continue
+                
+                if element.name == "code":
+                    text.append(f"`{element.text}`")
                     continue
                 
             text.append(element.text)
