@@ -236,6 +236,7 @@ class Media(commands.Cog):
             "audio/ogg",
             "audio/wav",
             "video/webm",
+            "video/quicktime",
         ]
 
         if isinstance(file, URLObject):
