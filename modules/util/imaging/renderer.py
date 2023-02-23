@@ -49,8 +49,6 @@ class Renders:
         img_width = width * img_width
 
         # literally have no idea how binary search works so thank you very much mr chatgpt!!!
-        t_size_min = 5
-        t_size_max = 75
 
         while t_size_min < t_size_max:
             t_size = (t_size_min + t_size_max) // 2
