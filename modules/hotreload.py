@@ -1,3 +1,8 @@
+"""
+stole from https://gist.github.com/AXVin/08ed554a458fc7aee4da162f4c53d086,
+changes: support for module relatives
+"""
+
 import importlib
 import os
 import pathlib
