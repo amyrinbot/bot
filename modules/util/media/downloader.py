@@ -21,8 +21,15 @@ from modules.util.imaging.utils import SequentialImageProcessor
 
 from .base import execute
 from .compressor import CompressionResult, Compressor
-from .exceptions import (AgeLimited, InvalidFormat, LiveStream, MediaException,
-                         MissingNginxHandler, NoPartsException, TooLong)
+from .exceptions import (
+    AgeLimited,
+    InvalidFormat,
+    LiveStream,
+    MediaException,
+    MissingNginxHandler,
+    NoPartsException,
+    TooLong,
+)
 
 
 @dataclass(frozen=True)
@@ -153,14 +160,10 @@ class Downloader:
 
     async def _extract_info(self) -> dict:
         out = await execute(f'yt-dlp -j "{self._url}"')
-        print(out)
         return json.loads(out)
 
     async def _check_validity(self, age_limit: int = 18) -> bool:
         data = await self._extract_info()
-
-        with open("data.json", "w") as f:
-            f.write(json.dumps(data, indent=4))
 
         if data.get("is_live") is True:
             raise LiveStream
@@ -228,14 +231,6 @@ class Downloader:
                     if resp.status == 200:
                         content_type = resp.headers.get("Content-Type", "image/jpeg")
                         imagedata = await resp.read()
-
-                        processor = SequentialImageProcessor(imagedata)
-                        await processor._init()
-                        await processor.resize_keep_ratio((300, 300))
-                        await processor.crop_to_center()
-                        img = await processor.save()
-
-                        imagedata = img.read()
 
                         audio.tag.images.set(
                             3,
